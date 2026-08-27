@@ -1,14 +1,10 @@
 "use client";
 
 import { Moon, Sun } from "lucide-react";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
 
 export function ThemeToggle() {
-  // `resolvedTheme` is undefined during SSR and the first client render
-  // (before next-themes' own effect resolves it), so both sides render the
-  // Moon icon and there's no hydration mismatch — no local mounted state
-  // or effect needed here.
   const { resolvedTheme, setTheme } = useTheme();
 
   return (
