@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 type OrbitLogoProps = {
@@ -9,9 +10,9 @@ type OrbitLogoProps = {
 };
 
 /**
- * Orbit brand mark: a minimalist orbital ring with a small orbiting node,
- * rendered in the purple/indigo brand gradient. Uses `currentColor` for the
- * wordmark so it inherits the surrounding text color in both themes.
+ * Orbit brand mark: the orbital ring + node icon (real logo asset,
+ * `public/logo-mark.png`) paired with an "Orbit" wordmark rendered as
+ * styled text so it inherits `text-foreground` and adapts across themes.
  */
 export function OrbitLogo({
   variant = "full",
@@ -38,37 +39,13 @@ export function OrbitSymbol({
   className?: string;
 }) {
   return (
-    <svg
+    <Image
+      src="/logo-mark.png"
+      alt="Orbit"
       width={size}
       height={size}
-      viewBox="0 0 32 32"
-      fill="none"
       className={cn("shrink-0", className)}
-      role="img"
-      aria-label="Orbit"
-    >
-      <defs>
-        <linearGradient
-          id="orbit-ring-gradient"
-          x1="4"
-          y1="4"
-          x2="28"
-          y2="28"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop offset="0" stopColor="#6366F1" />
-          <stop offset="1" stopColor="#8B5CF6" />
-        </linearGradient>
-      </defs>
-      <circle
-        cx="16"
-        cy="16"
-        r="11"
-        stroke="url(#orbit-ring-gradient)"
-        strokeWidth="2.5"
-      />
-      <circle cx="16" cy="16" r="2" fill="url(#orbit-ring-gradient)" />
-      <circle cx="24.4" cy="8.9" r="3" fill="url(#orbit-ring-gradient)" />
-    </svg>
+      priority
+    />
   );
 }

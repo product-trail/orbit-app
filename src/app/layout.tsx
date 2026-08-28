@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import Script from "next/script";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { THEME_STORAGE_KEY } from "@/lib/theme-constants";
 import "./globals.css";
 
@@ -52,7 +54,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{ __html: themeInitScript }}
         />
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <TooltipProvider delay={200}>{children}</TooltipProvider>
+          <Toaster position="bottom-right" />
+        </ThemeProvider>
       </body>
     </html>
   );

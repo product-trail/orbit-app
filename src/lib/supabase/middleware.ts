@@ -49,14 +49,25 @@ export async function updateSession(request: NextRequest) {
   const publicPaths = ["/login", "/signup", "/forgot-password", "/reset-password", "/"];
   const isPublicPath = publicPaths.some(
     (path) =>
-      request.nextUrl.pathname === path ||
-      request.nextUrl.pathname.startsWith("/auth"),
+      request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith("/auth"),
   );
 
   if (!user && !isPublicPath) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/login";
     redirectUrl.searchParams.set("next", request.nextUrl.pathname);
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  // Signed-in users don't need the login/signup forms — send them into the
+  // app resolver instead (it routes to their workspace or onboarding).
+  if (
+    user &&
+    (request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/signup")
+  ) {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = "/app";
+    redirectUrl.search = "";
     return NextResponse.redirect(redirectUrl);
   }
 

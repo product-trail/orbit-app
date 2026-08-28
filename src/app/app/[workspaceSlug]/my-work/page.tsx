@@ -1,0 +1,154 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { ListChecks } from "lucide-react";
+import { useWorkspaceData } from "@/components/workspace/workspace-data-provider";
+import { StatusBadge, PriorityBadge, BlockedBadge, WORK_STATUSES } from "@/components/workspace/badges";
+import { WorkItemPanel } from "@/components/workspace/work-item-panel";
+import { EmptyState } from "@/components/workspace/empty-state";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { formatDueDate, isOverdue, isDueToday, isThisWeek } from "@/lib/mock/date-helpers";
+import type { WorkItem } from "@/lib/mock/types";
+
+const TABS = ["All", "Today", "This Week", "Overdue", "Blocked", "Completed"] as const;
+type Tab = (typeof TABS)[number];
+
+const SORT_OPTIONS = ["Priority", "Due Date", "Impact", "Status"] as const;
+type SortOption = (typeof SORT_OPTIONS)[number];
+
+const PRIORITY_ORDER: Record<string, number> = { P0: 0, P1: 1, P2: 2, P3: 3 };
+const IMPACT_ORDER: Record<string, number> = { High: 0, Medium: 1, Low: 2 };
+
+function itemsForTab(items: WorkItem[], tab: Tab): WorkItem[] {
+  switch (tab) {
+    case "Today":
+      return items.filter(isDueToday);
+    case "This Week":
+      return items.filter(isThisWeek);
+    case "Overdue":
+      return items.filter(isOverdue);
+    case "Blocked":
+      return items.filter((w) => w.blocked);
+    case "Completed":
+      return items.filter((w) => w.status === "Completed");
+    default:
+      return items;
+  }
+}
+
+export default function MyWorkPage() {
+  const { workItems, currentUserId } = useWorkspaceData();
+  const searchParams = useSearchParams();
+  const [selectedId, setSelectedId] = useState<string | null>(searchParams.get("item"));
+  const [tab, setTab] = useState<Tab>("All");
+  const [sort, setSort] = useState<SortOption>("Priority");
+
+  const myItems = useMemo(
+    () => workItems.filter((w) => w.ownerId === currentUserId),
+    [workItems, currentUserId],
+  );
+
+  const sorted = useMemo(() => {
+    const list = [...itemsForTab(myItems, tab)];
+    list.sort((a, b) => {
+      switch (sort) {
+        case "Priority":
+          return PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority];
+        case "Due Date":
+          return (a.dueDate ?? "9999-99-99").localeCompare(b.dueDate ?? "9999-99-99");
+        case "Impact":
+          return IMPACT_ORDER[a.impact] - IMPACT_ORDER[b.impact];
+        case "Status":
+          return WORK_STATUSES.indexOf(a.status) - WORK_STATUSES.indexOf(b.status);
+        default:
+          return 0;
+      }
+    });
+    return list;
+  }, [myItems, tab, sort]);
+
+  const hasAnyItems = myItems.length > 0;
+
+  return (
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-6 py-8">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">My Work</h1>
+        <p className="text-sm text-muted-foreground">Your personal queue across the workspace.</p>
+      </div>
+
+      {!hasAnyItems ? (
+        <EmptyState
+          icon={ListChecks}
+          title="Nothing assigned to you yet"
+          description="Work items assigned to you will show up here."
+        />
+      ) : (
+        <Tabs value={tab} onValueChange={(v) => v && setTab(v as Tab)}>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <TabsList>
+              {TABS.map((t) => (
+                <TabsTrigger key={t} value={t}>
+                  {t}
+                  <span className="ml-1 text-xs text-muted-foreground">
+                    {itemsForTab(myItems, t).length}
+                  </span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-muted-foreground">Sort by</span>
+              <Select value={sort} onValueChange={(v) => v && setSort(v as SortOption)}>
+                <SelectTrigger size="sm"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {SORT_OPTIONS.map((s) => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <TabsContent value={tab} className="mt-4">
+            {sorted.length === 0 ? (
+              <EmptyState
+                icon={ListChecks}
+                title="Nothing here"
+                description="No work items match this view."
+              />
+            ) : (
+              <div className="flex flex-col gap-2">
+                {sorted.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setSelectedId(item.id)}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3 text-left transition-colors hover:border-brand-indigo/40"
+                  >
+                    <div className="flex min-w-0 flex-col gap-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="truncate text-sm font-medium text-foreground">{item.title}</span>
+                        {item.blocked && <BlockedBadge />}
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {item.type} · {formatDueDate(item.dueDate)}
+                      </span>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <PriorityBadge priority={item.priority} />
+                      <StatusBadge status={item.status} />
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      )}
+
+      <WorkItemPanel itemId={selectedId} onClose={() => setSelectedId(null)} />
+    </div>
+  );
+}
