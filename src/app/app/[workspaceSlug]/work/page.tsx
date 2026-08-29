@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { formatDueDate } from "@/lib/mock/date-helpers";
+import { formatDueDate, formatMonthLabel, reportMonthKey } from "@/lib/mock/date-helpers";
 import type { WorkStatus } from "@/lib/mock/types";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +28,12 @@ export default function BacklogPage() {
   const [ownerFilter, setOwnerFilter] = useState(ALL);
   const [statusFilter, setStatusFilter] = useState(ALL);
   const [priorityFilter, setPriorityFilter] = useState(ALL);
+  const [monthFilter, setMonthFilter] = useState(ALL);
+
+  const monthOptions = useMemo(() => {
+    const keys = new Set(workItems.map(reportMonthKey));
+    return [...keys].sort((a, b) => b.localeCompare(a));
+  }, [workItems]);
 
   const filtered = useMemo(() => {
     return workItems.filter((item) => {
@@ -36,9 +42,10 @@ export default function BacklogPage() {
       if (ownerFilter !== ALL && item.ownerId !== ownerFilter) return false;
       if (statusFilter !== ALL && item.status !== statusFilter) return false;
       if (priorityFilter !== ALL && item.priority !== priorityFilter) return false;
+      if (monthFilter !== ALL && reportMonthKey(item) !== monthFilter) return false;
       return true;
     });
-  }, [workItems, search, ownerFilter, statusFilter, priorityFilter]);
+  }, [workItems, search, ownerFilter, statusFilter, priorityFilter, monthFilter]);
 
   const hasAnyItems = workItems.length > 0;
 
@@ -112,6 +119,20 @@ export default function BacklogPage() {
                 <SelectItem value={ALL}>All priorities</SelectItem>
                 {PRIORITIES.map((p) => (
                   <SelectItem key={p} value={p}>{p}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={monthFilter} onValueChange={(v) => setMonthFilter(v ?? ALL)}>
+              <SelectTrigger size="sm">
+                <SelectValue placeholder="Month">
+                  {(v: string) => (v === ALL ? "All time" : formatMonthLabel(v))}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>All time</SelectItem>
+                {monthOptions.map((m) => (
+                  <SelectItem key={m} value={m}>{formatMonthLabel(m)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

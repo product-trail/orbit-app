@@ -9,7 +9,14 @@ import { WorkItemPanel } from "@/components/workspace/work-item-panel";
 import { EmptyState } from "@/components/workspace/empty-state";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { formatDueDate, isOverdue, isDueToday, isThisWeek } from "@/lib/mock/date-helpers";
+import {
+  formatDueDate,
+  formatMonthLabel,
+  isOverdue,
+  isDueToday,
+  isThisWeek,
+  reportMonthKey,
+} from "@/lib/mock/date-helpers";
 import type { WorkItem } from "@/lib/mock/types";
 
 const TABS = ["All", "Today", "This Week", "Overdue", "Blocked", "Completed"] as const;
@@ -17,6 +24,8 @@ type Tab = (typeof TABS)[number];
 
 const SORT_OPTIONS = ["Priority", "Due Date", "Impact", "Status"] as const;
 type SortOption = (typeof SORT_OPTIONS)[number];
+
+const ALL_MONTHS = "all";
 
 const PRIORITY_ORDER: Record<string, number> = { P0: 0, P1: 1, P2: 2, P3: 3 };
 const IMPACT_ORDER: Record<string, number> = { High: 0, Medium: 1, Low: 2 };
@@ -30,7 +39,9 @@ function itemsForTab(items: WorkItem[], tab: Tab): WorkItem[] {
     case "Overdue":
       return items.filter(isOverdue);
     case "Blocked":
-      return items.filter((w) => w.blocked);
+      // Blocked and Completed are mutually exclusive — once an item is
+      // completed, a stale blocker flag shouldn't double-count it here.
+      return items.filter((w) => w.blocked && w.status !== "Completed");
     case "Completed":
       return items.filter((w) => w.status === "Completed");
     default:
@@ -44,14 +55,25 @@ export default function MyWorkPage() {
   const [selectedId, setSelectedId] = useState<string | null>(searchParams.get("item"));
   const [tab, setTab] = useState<Tab>("All");
   const [sort, setSort] = useState<SortOption>("Priority");
+  const [monthFilter, setMonthFilter] = useState(ALL_MONTHS);
 
   const myItems = useMemo(
     () => workItems.filter((w) => w.ownerId === currentUserId),
     [workItems, currentUserId],
   );
 
+  const monthOptions = useMemo(() => {
+    const keys = new Set(myItems.map(reportMonthKey));
+    return [...keys].sort((a, b) => b.localeCompare(a));
+  }, [myItems]);
+
+  const monthFiltered = useMemo(() => {
+    if (monthFilter === ALL_MONTHS) return myItems;
+    return myItems.filter((w) => reportMonthKey(w) === monthFilter);
+  }, [myItems, monthFilter]);
+
   const sorted = useMemo(() => {
-    const list = [...itemsForTab(myItems, tab)];
+    const list = [...itemsForTab(monthFiltered, tab)];
     list.sort((a, b) => {
       switch (sort) {
         case "Priority":
@@ -67,7 +89,7 @@ export default function MyWorkPage() {
       }
     });
     return list;
-  }, [myItems, tab, sort]);
+  }, [monthFiltered, tab, sort]);
 
   const hasAnyItems = myItems.length > 0;
 
@@ -92,22 +114,41 @@ export default function MyWorkPage() {
                 <TabsTrigger key={t} value={t}>
                   {t}
                   <span className="ml-1 text-xs text-muted-foreground">
-                    {itemsForTab(myItems, t).length}
+                    {itemsForTab(monthFiltered, t).length}
                   </span>
                 </TabsTrigger>
               ))}
             </TabsList>
 
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-muted-foreground">Sort by</span>
-              <Select value={sort} onValueChange={(v) => v && setSort(v as SortOption)}>
-                <SelectTrigger size="sm"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {SORT_OPTIONS.map((s) => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-muted-foreground">Month</span>
+                <Select value={monthFilter} onValueChange={(v) => setMonthFilter(v ?? ALL_MONTHS)}>
+                  <SelectTrigger size="sm">
+                    <SelectValue placeholder="Month">
+                      {(v: string) => (v === ALL_MONTHS ? "All time" : formatMonthLabel(v))}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ALL_MONTHS}>All time</SelectItem>
+                    {monthOptions.map((m) => (
+                      <SelectItem key={m} value={m}>{formatMonthLabel(m)}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-muted-foreground">Sort by</span>
+                <Select value={sort} onValueChange={(v) => v && setSort(v as SortOption)}>
+                  <SelectTrigger size="sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {SORT_OPTIONS.map((s) => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 

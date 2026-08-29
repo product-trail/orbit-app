@@ -99,7 +99,7 @@ export default function SignupPage() {
             Create your account
           </h1>
           <p className="text-sm text-muted-foreground">
-            Set up Orbit for your product team in minutes.
+            Set up Orbits for your product team in minutes.
           </p>
         </div>
       </div>

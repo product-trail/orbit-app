@@ -65,6 +65,24 @@ export function formatDueDate(dueDate: string | null): string {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
+/** "YYYY-MM" key for grouping/filtering items by month, e.g. for monthly reports. */
+export function monthKey(iso: string): string {
+  return iso.slice(0, 7);
+}
+
+/** Turns a "YYYY-MM" key into a readable label, e.g. "August 2026". */
+export function formatMonthLabel(key: string): string {
+  const [year, month] = key.split("-").map(Number);
+  const date = new Date(year, (month ?? 1) - 1, 1);
+  return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+}
+
+/** The month a work item is "reported against" — its due date if it has one
+ * (when the work was planned for), otherwise when it was created. */
+export function reportMonthKey(item: WorkItem): string {
+  return monthKey(item.dueDate ?? item.createdAt);
+}
+
 export function formatDateTime(iso: string): string {
   const date = new Date(iso);
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });

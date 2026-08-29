@@ -15,7 +15,7 @@ export function AuthSplitLayout({ children }: { children: ReactNode }) {
       <div className="relative hidden w-1/2 shrink-0 items-center justify-center bg-[#000612] p-12 lg:flex">
         <Image
           src="/auth-banner.png"
-          alt="Orbit — where product work comes together"
+          alt="Orbits — where product work comes together"
           width={1983}
           height={793}
           priority

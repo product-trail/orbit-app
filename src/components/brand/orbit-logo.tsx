@@ -16,7 +16,7 @@ type OrbitLogoProps = {
  */
 export function OrbitLogo({
   variant = "full",
-  size = 28,
+  size = 34,
   className,
 }: OrbitLogoProps) {
   return (
@@ -24,7 +24,7 @@ export function OrbitLogo({
       <OrbitSymbol size={size} />
       {variant === "full" && (
         <span className="text-lg font-semibold tracking-tight text-foreground">
-          Orbit
+          Orbits
         </span>
       )}
     </div>
@@ -32,7 +32,7 @@ export function OrbitLogo({
 }
 
 export function OrbitSymbol({
-  size = 28,
+  size = 34,
   className,
 }: {
   size?: number;
@@ -41,7 +41,7 @@ export function OrbitSymbol({
   return (
     <Image
       src="/logo-mark.png"
-      alt="Orbit"
+      alt="Orbits"
       width={size}
       height={size}
       className={cn("shrink-0", className)}

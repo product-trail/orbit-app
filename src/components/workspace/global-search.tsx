@@ -47,7 +47,7 @@ export function GlobalSearch({ slug }: { slug: string }) {
         onClick={() => setOpen(true)}
       >
         <Search className="size-4" />
-        <span className="flex-1 text-left">Search Orbit</span>
+        <span className="flex-1 text-left">Search Orbits</span>
         <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px]">
           ⌘K
         </kbd>

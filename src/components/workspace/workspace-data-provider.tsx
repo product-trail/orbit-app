@@ -188,9 +188,15 @@ export function WorkspaceDataProvider({
         const previous = workItems.find((w) => w.id === id);
         if (!previous) return;
         const completedAt = status === "Completed" ? nowIso() : previous.completedAt;
+        // A completed item can't still be "blocked" — clear any stale blocker
+        // so it doesn't keep showing up under Blocked views/counts once done.
+        const blocked = status === "Completed" ? false : previous.blocked;
+        const blockerDescription = status === "Completed" ? null : previous.blockerDescription;
         setWorkItems((prev) =>
           prev.map((item) =>
-            item.id === id ? { ...item, status, updatedAt: nowIso(), completedAt } : item,
+            item.id === id
+              ? { ...item, status, blocked, blockerDescription, updatedAt: nowIso(), completedAt }
+              : item,
           ),
         );
         logActivity({
@@ -201,7 +207,12 @@ export function WorkspaceDataProvider({
         void (async () => {
           const { error } = await supabase
             .from("work_items")
-            .update({ status, completed_at: completedAt })
+            .update({
+              status,
+              completed_at: completedAt,
+              blocked,
+              blocker_description: blockerDescription,
+            })
             .eq("id", id);
           if (error) {
             setWorkItems((prev) => prev.map((item) => (item.id === id ? previous : item)));

@@ -36,7 +36,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Orbit — Where product work comes together",
+  title: "Orbits — Where product work comes together",
   description:
     "The operating layer for product teams to manage the work that doesn't fit cleanly into JIRA.",
 };

@@ -35,7 +35,10 @@ function NavLink({
   Icon: React.ComponentType<{ className?: string }>;
 }) {
   const pathname = usePathname();
-  const active = href === pathname || (href.length > 1 && pathname?.startsWith(`${href}/`));
+  // Exact match only — sub-route prefix matching would make "Home" (whose
+  // href is just the workspace root, e.g. /app/acme) match every other
+  // page nested under that same root, highlighting it everywhere.
+  const active = href === pathname;
 
   return (
     <Link
@@ -77,9 +80,9 @@ export function AppShell({
     <div className="flex min-h-screen">
       <aside className="flex w-60 shrink-0 flex-col gap-4 border-r border-sidebar-border bg-sidebar px-3 py-4">
         <div className="flex items-center gap-2 px-1.5">
-          <OrbitSymbol size={22} />
-          <span className="text-base font-semibold tracking-tight text-sidebar-foreground">
-            Orbit
+          <OrbitSymbol size={30} />
+          <span className="text-lg font-semibold tracking-tight text-sidebar-foreground">
+            Orbits
           </span>
         </div>
 
@@ -101,7 +104,7 @@ export function AppShell({
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between gap-4 border-b border-border px-6 py-3">
+        <header className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-border bg-background px-6 py-3">
           <div>
             <p className="text-sm font-semibold text-foreground">{workspace.name}</p>
           </div>
