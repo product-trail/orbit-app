@@ -84,6 +84,7 @@ export function mapWorkItem(w: WorkItemRow): WorkItem {
     productArea: w.product_area,
     blocked: w.blocked,
     blockerDescription: w.blocker_description,
+    expectedImpact: w.expected_impact,
     createdAt: w.created_at,
     updatedAt: w.updated_at,
     completedAt: w.completed_at,

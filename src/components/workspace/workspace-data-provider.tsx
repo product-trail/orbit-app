@@ -35,7 +35,9 @@ type NewWorkItemInput = Pick<
   WorkItem,
   "title" | "description" | "type" | "priority" | "impact" | "ownerId" | "dueDate"
 > &
-  Partial<Pick<WorkItem, "productArea" | "initiativeId" | "jiraId" | "jiraUrl">>;
+  Partial<
+    Pick<WorkItem, "productArea" | "initiativeId" | "jiraId" | "jiraUrl" | "expectedImpact">
+  >;
 
 type NewIdeaInput = Pick<Idea, "title" | "problem" | "description" | "impact"> &
   Partial<Pick<Idea, "productArea">>;
@@ -76,6 +78,8 @@ type WorkspaceDataValue = {
   updateWorkItemDescription: (id: string, description: string) => void;
   updateWorkItemJira: (id: string, jiraId: string | null, jiraUrl: string | null) => void;
   toggleWorkItemBlocked: (id: string, blocked: boolean, description?: string) => void;
+  updateWorkItemInitiative: (id: string, initiativeId: string | null) => void;
+  updateWorkItemExpectedImpact: (id: string, expectedImpact: string | null) => void;
   createWorkItem: (input: NewWorkItemInput) => Promise<WorkItem>;
   addComment: (workItemId: string, content: string) => Promise<void>;
   createIdea: (input: NewIdeaInput) => Promise<Idea>;
@@ -350,6 +354,53 @@ export function WorkspaceDataProvider({
         })();
       },
 
+      updateWorkItemInitiative: (id, initiativeId) => {
+        const previous = workItems.find((w) => w.id === id);
+        if (!previous) return;
+        setWorkItems((prev) =>
+          prev.map((item) =>
+            item.id === id ? { ...item, initiativeId, updatedAt: nowIso() } : item,
+          ),
+        );
+        logActivity({
+          entityType: "work_item",
+          entityId: id,
+          action: initiativeId
+            ? `linked to initiative: ${initiatives.find((i) => i.id === initiativeId)?.name ?? initiativeId}`
+            : "unlinked from initiative",
+        });
+        void (async () => {
+          const { error } = await supabase
+            .from("work_items")
+            .update({ initiative_id: initiativeId })
+            .eq("id", id);
+          if (error) {
+            setWorkItems((prev) => prev.map((item) => (item.id === id ? previous : item)));
+            toast.error("Couldn't update initiative link", { description: error.message });
+          }
+        })();
+      },
+
+      updateWorkItemExpectedImpact: (id, expectedImpact) => {
+        const previous = workItems.find((w) => w.id === id);
+        if (!previous) return;
+        setWorkItems((prev) =>
+          prev.map((item) =>
+            item.id === id ? { ...item, expectedImpact, updatedAt: nowIso() } : item,
+          ),
+        );
+        void (async () => {
+          const { error } = await supabase
+            .from("work_items")
+            .update({ expected_impact: expectedImpact })
+            .eq("id", id);
+          if (error) {
+            setWorkItems((prev) => prev.map((item) => (item.id === id ? previous : item)));
+            toast.error("Couldn't update expected impact", { description: error.message });
+          }
+        })();
+      },
+
       createWorkItem: async (input) => {
         const { data, error } = await supabase
           .from("work_items")
@@ -370,6 +421,7 @@ export function WorkspaceDataProvider({
             product_area: input.productArea ?? null,
             blocked: false,
             blocker_description: null,
+            expected_impact: input.expectedImpact ?? null,
           })
           .select()
           .single();

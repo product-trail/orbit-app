@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 const ALL = "all";
 
 export default function BacklogPage() {
-  const { workItems, members, getProfile, updateWorkItemStatus } = useWorkspaceData();
+  const { workItems, members, getProfile, initiatives, updateWorkItemStatus } = useWorkspaceData();
   const searchParams = useSearchParams();
   const [selectedId, setSelectedId] = useState<string | null>(searchParams.get("item"));
   const [view, setView] = useState<"table" | "kanban">("table");
@@ -148,6 +148,7 @@ export default function BacklogPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Work</TableHead>
+                    <TableHead>Initiative</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Impact</TableHead>
                     <TableHead>Priority</TableHead>
@@ -165,10 +166,22 @@ export default function BacklogPage() {
                       onClick={() => setSelectedId(item.id)}
                     >
                       <TableCell className="max-w-64">
-                        <div className="flex items-center gap-2">
-                          <span className="truncate font-medium text-foreground">{item.title}</span>
-                          {item.blocked && <BlockedBadge />}
+                        <div className="flex flex-col gap-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className="truncate font-medium text-foreground">{item.title}</span>
+                            {item.blocked && <BlockedBadge />}
+                          </div>
+                          {item.expectedImpact && (
+                            <span className="truncate text-xs text-muted-foreground">
+                              {item.expectedImpact}
+                            </span>
+                          )}
                         </div>
+                      </TableCell>
+                      <TableCell className="max-w-40 truncate text-muted-foreground">
+                        {item.initiativeId
+                          ? (initiatives.find((i) => i.id === item.initiativeId)?.name ?? "—")
+                          : "—"}
                       </TableCell>
                       <TableCell className="text-muted-foreground">{item.type}</TableCell>
                       <TableCell className="text-muted-foreground">{item.impact}</TableCell>
@@ -229,7 +242,7 @@ function KanbanBoard({
   items: ReturnType<typeof useWorkspaceData>["workItems"];
   onOpen: (id: string) => void;
 }) {
-  const { getProfile, updateWorkItemStatus } = useWorkspaceData();
+  const { getProfile, initiatives, updateWorkItemStatus } = useWorkspaceData();
   const [dragOverStatus, setDragOverStatus] = useState<WorkStatus | null>(null);
 
   return (
@@ -269,6 +282,14 @@ function KanbanBoard({
                   className="flex cursor-pointer flex-col gap-2 rounded-md border border-border bg-card p-2.5 shadow-sm hover:border-brand-indigo/40"
                 >
                   <p className="text-sm font-medium text-foreground">{item.title}</p>
+                  {item.initiativeId && (
+                    <span className="truncate text-xs text-brand-indigo">
+                      {initiatives.find((i) => i.id === item.initiativeId)?.name ?? ""}
+                    </span>
+                  )}
+                  {item.expectedImpact && (
+                    <span className="truncate text-xs text-muted-foreground">{item.expectedImpact}</span>
+                  )}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
                       <PriorityBadge priority={item.priority} />

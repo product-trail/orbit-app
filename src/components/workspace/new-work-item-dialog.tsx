@@ -33,6 +33,7 @@ const WORK_TYPES: WorkType[] = [
   "Other",
 ];
 const IMPACTS: Impact[] = ["High", "Medium", "Low"];
+const NO_INITIATIVE = "none";
 
 export function NewWorkItemDialog({
   trigger,
@@ -49,7 +50,7 @@ export function NewWorkItemDialog({
   /** Pre-fills the description, e.g. with the parent initiative's objective. */
   initialDescription?: string;
 }) {
-  const { members, getProfile, currentUserId, createWorkItem } = useWorkspaceData();
+  const { members, getProfile, currentUserId, createWorkItem, initiatives } = useWorkspaceData();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState(initialTitle ?? "");
   const [description, setDescription] = useState(initialDescription ?? "");
@@ -58,7 +59,14 @@ export function NewWorkItemDialog({
   const [impact, setImpact] = useState<Impact>("Medium");
   const [ownerId, setOwnerId] = useState(defaultOwnerId ?? currentUserId);
   const [dueDate, setDueDate] = useState("");
+  const [selectedInitiativeId, setSelectedInitiativeId] = useState(NO_INITIATIVE);
+  const [expectedImpact, setExpectedImpact] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // When this dialog is opened from within an initiative's own page,
+  // `initiativeId` is passed in and the link is fixed — no picker needed.
+  // Otherwise (global backlog / team page), let the user pick one.
+  const showInitiativePicker = !initiativeId;
 
   const reset = () => {
     setTitle(initialTitle ?? "");
@@ -68,6 +76,8 @@ export function NewWorkItemDialog({
     setImpact("Medium");
     setOwnerId(defaultOwnerId ?? currentUserId);
     setDueDate("");
+    setSelectedInitiativeId(NO_INITIATIVE);
+    setExpectedImpact("");
   };
 
   const submit = async () => {
@@ -82,7 +92,8 @@ export function NewWorkItemDialog({
         impact,
         ownerId,
         dueDate: dueDate || null,
-        initiativeId,
+        initiativeId: initiativeId ?? (selectedInitiativeId === NO_INITIATIVE ? undefined : selectedInitiativeId),
+        expectedImpact: expectedImpact.trim() || undefined,
       });
       toast.success("Work item created", { description: title.trim() });
       setOpen(false);
@@ -201,6 +212,40 @@ export function NewWorkItemDialog({
                 onChange={(e) => setDueDate(e.target.value)}
               />
             </div>
+
+            {showInitiativePicker && (
+              <div className="col-span-2 flex flex-col gap-1.5">
+                <Label>Initiative</Label>
+                <Select value={selectedInitiativeId} onValueChange={(v) => v && setSelectedInitiativeId(v)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue>
+                      {(v: string) =>
+                        v === NO_INITIATIVE
+                          ? "Not linked"
+                          : (initiatives.find((i) => i.id === v)?.name ?? "Not linked")
+                      }
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NO_INITIATIVE}>Not linked</SelectItem>
+                    {initiatives.map((i) => (
+                      <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="wi-expected-impact">Expected impact (optional)</Label>
+            <Textarea
+              id="wi-expected-impact"
+              value={expectedImpact}
+              onChange={(e) => setExpectedImpact(e.target.value)}
+              placeholder="e.g. Increase landing page conversion by 2%"
+              rows={2}
+            />
           </div>
         </div>
 

@@ -22,6 +22,7 @@ import { formatDateTime, formatDueDate, timeAgo } from "@/lib/mock/date-helpers"
 import type { Impact } from "@/lib/mock/types";
 
 const IMPACTS: Impact[] = ["High", "Medium", "Low"];
+const NO_INITIATIVE = "none";
 
 export function WorkItemPanel({
   itemId,
@@ -44,6 +45,8 @@ export function WorkItemPanel({
     updateWorkItemDueDate,
     updateWorkItemDescription,
     updateWorkItemJira,
+    updateWorkItemInitiative,
+    updateWorkItemExpectedImpact,
     toggleWorkItemBlocked,
     addComment,
   } = useWorkspaceData();
@@ -52,15 +55,14 @@ export function WorkItemPanel({
   const [postingComment, setPostingComment] = useState(false);
   const [editingDescription, setEditingDescription] = useState(false);
   const [descriptionDraft, setDescriptionDraft] = useState("");
+  const [editingExpectedImpact, setEditingExpectedImpact] = useState(false);
+  const [expectedImpactDraft, setExpectedImpactDraft] = useState("");
   const [addingJira, setAddingJira] = useState(false);
   const [jiraIdDraft, setJiraIdDraft] = useState("");
   const [addingBlocker, setAddingBlocker] = useState(false);
   const [blockerDraft, setBlockerDraft] = useState("");
 
   const item = workItems.find((w) => w.id === itemId) ?? null;
-  const initiative = item?.initiativeId
-    ? initiatives.find((i) => i.id === item.initiativeId)
-    : null;
   const itemComments = comments
     .filter((c) => c.workItemId === itemId)
     .sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
@@ -155,11 +157,30 @@ export function WorkItemPanel({
                 </Field>
               </div>
 
-              {initiative && (
-                <Field label="Initiative">
-                  <span className="text-sm font-medium text-brand-indigo">{initiative.name}</span>
-                </Field>
-              )}
+              <Field label="Initiative">
+                <Select
+                  value={item.initiativeId ?? NO_INITIATIVE}
+                  onValueChange={(v) =>
+                    v && updateWorkItemInitiative(item.id, v === NO_INITIATIVE ? null : v)
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue>
+                      {(v: string) =>
+                        v === NO_INITIATIVE
+                          ? "Not linked"
+                          : (initiatives.find((i) => i.id === v)?.name ?? "Not linked")
+                      }
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NO_INITIATIVE}>Not linked</SelectItem>
+                    {initiatives.map((i) => (
+                      <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
 
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-center justify-between">
@@ -201,6 +222,52 @@ export function WorkItemPanel({
                   </div>
                 ) : (
                   <p className="text-sm text-foreground">{item.description || "No description."}</p>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-medium text-muted-foreground">Expected impact</p>
+                  {!editingExpectedImpact && (
+                    <button
+                      type="button"
+                      className="text-xs font-medium text-brand-indigo hover:underline"
+                      onClick={() => {
+                        setExpectedImpactDraft(item.expectedImpact ?? "");
+                        setEditingExpectedImpact(true);
+                      }}
+                    >
+                      Edit
+                    </button>
+                  )}
+                </div>
+                {editingExpectedImpact ? (
+                  <div className="flex flex-col gap-2">
+                    <Textarea
+                      value={expectedImpactDraft}
+                      onChange={(e) => setExpectedImpactDraft(e.target.value)}
+                      placeholder="e.g. Increase landing page conversion by 2%"
+                      rows={2}
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          updateWorkItemExpectedImpact(item.id, expectedImpactDraft.trim() || null);
+                          setEditingExpectedImpact(false);
+                        }}
+                      >
+                        Save
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => setEditingExpectedImpact(false)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-foreground">
+                    {item.expectedImpact || "No expected impact set."}
+                  </p>
                 )}
               </div>
 

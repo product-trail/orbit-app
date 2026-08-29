@@ -83,6 +83,9 @@ export type WorkItem = {
   productArea: string | null;
   blocked: boolean;
   blockerDescription: string | null;
+  /** Narrative description of the expected business outcome, e.g. "increase
+   * landing page conversion by 2%" — distinct from the coarse `impact` enum. */
+  expectedImpact: string | null;
   createdAt: string;
   updatedAt: string;
   completedAt: string | null;

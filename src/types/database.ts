@@ -82,6 +82,7 @@ type WorkItemsRow = {
   product_area: string | null;
   blocked: boolean;
   blocker_description: string | null;
+  expected_impact: string | null;
   created_at: string;
   updated_at: string;
   completed_at: string | null;
@@ -186,6 +187,7 @@ type WorkItemsInsert = InsertOf<
   | "product_area"
   | "blocked"
   | "blocker_description"
+  | "expected_impact"
   | "created_at"
   | "updated_at"
   | "completed_at"

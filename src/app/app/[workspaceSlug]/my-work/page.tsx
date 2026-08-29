@@ -39,7 +39,7 @@ function itemsForTab(items: WorkItem[], tab: Tab): WorkItem[] {
 }
 
 export default function MyWorkPage() {
-  const { workItems, currentUserId } = useWorkspaceData();
+  const { workItems, currentUserId, initiatives } = useWorkspaceData();
   const searchParams = useSearchParams();
   const [selectedId, setSelectedId] = useState<string | null>(searchParams.get("item"));
   const [tab, setTab] = useState<Tab>("All");
@@ -134,7 +134,18 @@ export default function MyWorkPage() {
                       </div>
                       <span className="text-xs text-muted-foreground">
                         {item.type} · {formatDueDate(item.dueDate)}
+                        {item.initiativeId && (
+                          <>
+                            {" · "}
+                            {initiatives.find((i) => i.id === item.initiativeId)?.name ?? ""}
+                          </>
+                        )}
                       </span>
+                      {item.expectedImpact && (
+                        <span className="truncate text-xs text-muted-foreground">
+                          {item.expectedImpact}
+                        </span>
+                      )}
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
                       <PriorityBadge priority={item.priority} />
