@@ -125,15 +125,15 @@ export default function StandupPage() {
               description="Submitted standups will show up here."
             />
           ) : (
-            <div className="flex gap-6">
-              <div className="flex w-32 shrink-0 flex-col gap-1">
+            <div className="flex flex-col gap-4 md:flex-row md:gap-6">
+              <div className="flex gap-1 overflow-x-auto md:w-32 md:shrink-0 md:flex-col md:overflow-visible">
                 {historyDates.map((d) => (
                   <button
                     key={d}
                     type="button"
                     onClick={() => setHistoryDate(d)}
                     className={cn(
-                      "rounded-md px-2.5 py-1.5 text-left text-sm font-medium transition-colors",
+                      "shrink-0 rounded-md px-2.5 py-1.5 text-left text-sm font-medium transition-colors",
                       d === selectedDate
                         ? "bg-brand-indigo/10 text-brand-indigo"
                         : "text-muted-foreground hover:bg-muted",

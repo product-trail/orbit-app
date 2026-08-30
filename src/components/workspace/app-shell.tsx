@@ -56,6 +56,35 @@ function NavLink({
   );
 }
 
+function MobileNavLink({
+  href,
+  label,
+  Icon,
+}: {
+  href: string;
+  label: string;
+  Icon: React.ComponentType<{ className?: string }>;
+}) {
+  const pathname = usePathname();
+  const active = href === pathname;
+
+  return (
+    <Link
+      href={href}
+      aria-label={label}
+      className={cn(
+        "flex flex-1 flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-[10px] font-medium transition-colors",
+        active
+          ? "bg-sidebar-primary text-sidebar-primary-foreground"
+          : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+      )}
+    >
+      <Icon className="size-5 shrink-0" />
+      <span className="w-full truncate text-center">{label}</span>
+    </Link>
+  );
+}
+
 export function AppShell({
   slug,
   workspaces,
@@ -77,8 +106,8 @@ export function AppShell({
   };
 
   return (
-    <div className="flex min-h-screen">
-      <aside className="flex w-60 shrink-0 flex-col gap-4 border-r border-sidebar-border bg-sidebar px-3 py-4">
+    <div className="flex h-screen overflow-hidden">
+      <aside className="hidden w-60 shrink-0 flex-col gap-4 overflow-y-auto border-r border-sidebar-border bg-sidebar px-3 py-4 md:flex">
         <div className="flex items-center gap-2 px-1.5">
           <OrbitSymbol size={30} />
           <span className="text-lg font-semibold tracking-tight text-sidebar-foreground">
@@ -103,12 +132,12 @@ export function AppShell({
         </div>
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-border bg-background px-6 py-3">
-          <div>
-            <p className="text-sm font-semibold text-foreground">{workspace.name}</p>
+      <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">
+        <header className="sticky top-0 z-20 flex items-center justify-between gap-2 border-b border-border bg-background px-4 py-3 sm:gap-4 sm:px-6">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-foreground">{workspace.name}</p>
           </div>
-          <div className="flex flex-1 items-center justify-end gap-2">
+          <div className="flex flex-1 items-center justify-end gap-1 sm:gap-2">
             <GlobalSearch slug={slug} />
             <Button
               variant="ghost"
@@ -149,8 +178,22 @@ export function AppShell({
           </div>
         </header>
 
-        <main className="flex-1 bg-background">{children}</main>
+        <main className="flex-1 bg-background pb-24 md:pb-0">{children}</main>
       </div>
+
+      <nav
+        aria-label="Primary"
+        className="fixed inset-x-3 bottom-3 z-30 flex items-center justify-between gap-0.5 rounded-2xl border border-sidebar-border bg-sidebar px-1.5 py-2 shadow-lg md:hidden"
+      >
+        {NAV_ITEMS.map((item) => (
+          <MobileNavLink
+            key={item.label}
+            href={item.href(slug)}
+            label={item.mobileLabel ?? item.label}
+            Icon={item.icon}
+          />
+        ))}
+      </nav>
     </div>
   );
 }

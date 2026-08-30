@@ -84,7 +84,11 @@ export default function RoadmapPage() {
       width: Math.max(percent(parseDate(r.roadmapItem.targetDate)) - percent(parseDate(r.roadmapItem.startDate)), 3),
     }));
 
-    return { months, bars };
+    // Compact "Jun 2026 – Oct 2026" caption used in place of the per-month
+    // ruler on phones, where there isn't room for a full month-by-month axis.
+    const rangeLabel = `${rangeStart.toLocaleDateString("en-US", { month: "short", year: "numeric" })} – ${new Date(rangeEnd.getTime() - 1).toLocaleDateString("en-US", { month: "short", year: "numeric" })}`;
+
+    return { months, bars, rangeLabel };
   }, [rows]);
 
   const linkedCount = (initiativeId: string) => workItems.filter((w) => w.initiativeId === initiativeId).length;
@@ -104,9 +108,12 @@ export default function RoadmapPage() {
         />
       ) : (
         <>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex flex-col gap-4">
+          {/* Timeline chart — tablet and up. Needs real horizontal room for
+              the shared month ruler + per-row label column, so it doesn't
+              try to compress onto a phone; the card below replaces it there. */}
+          <Card className="hidden md:block">
+            <CardContent className="overflow-x-auto pt-6">
+              <div className="flex min-w-[640px] flex-col gap-4">
                 <div className="relative ml-48 h-6 border-b border-border">
                   {timeline.months.map((m) => (
                     <span
@@ -151,8 +158,51 @@ export default function RoadmapPage() {
             </CardContent>
           </Card>
 
-          <div className="overflow-hidden rounded-lg border border-border">
-            <Table>
+          {/* Timeline chart — phones only. No shared ruler or fixed label
+              column (neither fits), just a compact range caption plus one
+              full-width proportional bar per initiative — same left/width
+              percentages as the desktop chart, so relative timing across
+              initiatives is still meaningful, but nothing needs to scroll. */}
+          <Card className="md:hidden">
+            <CardContent className="flex flex-col gap-4 pt-6">
+              <p className="text-xs font-medium text-muted-foreground">{timeline.rangeLabel}</p>
+              <div className="flex flex-col gap-3">
+                {timeline.bars.map(({ roadmapItem, initiative, left, width }) => {
+                  if (!initiative) return null;
+                  return (
+                    <button
+                      key={roadmapItem.id}
+                      type="button"
+                      onClick={() => setSelectedInitiativeId(initiative.id)}
+                      className="flex flex-col gap-1.5 text-left"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="truncate text-sm font-medium text-foreground hover:text-brand-indigo">
+                          {initiative.name}
+                        </span>
+                        <span className="shrink-0 text-xs text-muted-foreground">
+                          {formatDueDate(roadmapItem.targetDate)}
+                        </span>
+                      </div>
+                      <div className="relative h-2 w-full rounded-full bg-muted">
+                        <div
+                          className={cn(
+                            "absolute h-2 rounded-full opacity-80",
+                            BAR_COLORS[roadmapItem.status] ?? "bg-muted",
+                          )}
+                          style={{ left: `${left}%`, width: `${width}%` }}
+                        />
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Table — tablet and up. */}
+          <div className="hidden overflow-x-auto rounded-lg border border-border md:block">
+            <Table className="min-w-[640px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>Initiative</TableHead>
@@ -200,6 +250,43 @@ export default function RoadmapPage() {
                 })}
               </TableBody>
             </Table>
+          </div>
+
+          {/* Cards — phones only. */}
+          <div className="flex flex-col gap-2 md:hidden">
+            {rows.map(({ roadmapItem, initiative }) => {
+              if (!initiative) return null;
+              return (
+                <div
+                  key={initiative.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setSelectedInitiativeId(initiative.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") setSelectedInitiativeId(initiative.id);
+                  }}
+                  className="flex cursor-pointer flex-col gap-2 rounded-lg border border-border bg-card px-4 py-3 transition-colors hover:border-brand-indigo/40"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate text-sm font-medium text-foreground">{initiative.name}</span>
+                    <InitiativeStatusBadge status={initiative.status} />
+                  </div>
+                  <p className="line-clamp-2 text-xs text-muted-foreground">{initiative.expectedImpact}</p>
+                  <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                    <div className="flex min-w-0 items-center gap-1.5">
+                      <Avatar size="sm">
+                        <AvatarFallback>{getProfile(initiative.ownerId).initials}</AvatarFallback>
+                      </Avatar>
+                      <span className="truncate">{getProfile(initiative.ownerId).name}</span>
+                    </div>
+                    <span className="shrink-0">Target: {formatDueDate(roadmapItem.targetDate)}</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {linkedCount(initiative.id)} linked work item{linkedCount(initiative.id) === 1 ? "" : "s"}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </>
       )}

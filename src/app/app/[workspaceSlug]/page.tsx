@@ -29,9 +29,10 @@ export default function HomePage() {
   const { workItems, currentUserId, getProfile, activityLogs } = useWorkspaceData();
 
   const myWork = workItems.filter((w) => w.ownerId === currentUserId);
-  // Blocked and Active are mutually exclusive — a blocked item shows up
-  // under Blocked, not under Active, regardless of its underlying status.
-  const blocked = myWork.filter((w) => w.blocked && w.status !== "Completed");
+  // Blocked is independent of status — an item marked blocked counts here
+  // regardless of completion. Active excludes both completed and blocked
+  // items so it only reflects work that's actively movable right now.
+  const blocked = myWork.filter((w) => w.blocked);
   const active = myWork.filter((w) => w.status !== "Completed" && !w.blocked);
   const dueToday = myWork.filter(isDueToday);
   const overdue = myWork.filter(isOverdue);

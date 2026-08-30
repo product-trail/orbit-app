@@ -71,7 +71,7 @@ export default function BacklogPage() {
       ) : (
         <>
           <div className="flex flex-wrap items-center gap-2">
-            <div className="relative w-56">
+            <div className="relative w-full sm:w-56">
               <Search className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search work…"
@@ -164,62 +164,140 @@ export default function BacklogPage() {
               description="Try clearing a filter or searching a different term."
             />
           ) : view === "table" ? (
-            <div className="overflow-hidden rounded-lg border border-border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Work</TableHead>
-                    <TableHead>Initiative</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Impact</TableHead>
-                    <TableHead>Priority</TableHead>
-                    <TableHead>Owner</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>JIRA</TableHead>
-                    <TableHead>Due</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map((item) => (
-                    <TableRow
-                      key={item.id}
-                      className="cursor-pointer"
-                      onClick={() => setSelectedId(item.id)}
-                    >
-                      <TableCell className="max-w-64">
-                        <div className="flex flex-col gap-0.5">
-                          <div className="flex items-center gap-2">
-                            <span className="truncate font-medium text-foreground">{item.title}</span>
-                            {item.blocked && <BlockedBadge />}
+            <>
+              {/* Table — tablet and up. Hidden on phones in favor of cards
+                  below, since a 9-column table can't shrink to fit without
+                  either horizontal scroll or unreadably cramped cells. */}
+              <div className="hidden overflow-x-auto rounded-lg border border-border md:block">
+                <Table className="min-w-[720px]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Work</TableHead>
+                      <TableHead>Initiative</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Impact</TableHead>
+                      <TableHead>Priority</TableHead>
+                      <TableHead>Owner</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>JIRA</TableHead>
+                      <TableHead>Due</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filtered.map((item) => (
+                      <TableRow
+                        key={item.id}
+                        className="cursor-pointer"
+                        onClick={() => setSelectedId(item.id)}
+                      >
+                        <TableCell className="max-w-64">
+                          <div className="flex flex-col gap-0.5">
+                            <div className="flex items-center gap-2">
+                              <span className="truncate font-medium text-foreground">{item.title}</span>
+                              {item.blocked && <BlockedBadge />}
+                            </div>
+                            {item.expectedImpact && (
+                              <span className="truncate text-xs text-muted-foreground">
+                                {item.expectedImpact}
+                              </span>
+                            )}
                           </div>
-                          {item.expectedImpact && (
-                            <span className="truncate text-xs text-muted-foreground">
-                              {item.expectedImpact}
+                        </TableCell>
+                        <TableCell className="max-w-40 truncate text-muted-foreground">
+                          {item.initiativeId
+                            ? (initiatives.find((i) => i.id === item.initiativeId)?.name ?? "—")
+                            : "—"}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">{item.type}</TableCell>
+                        <TableCell className="text-muted-foreground">{item.impact}</TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <PriorityBadge priority={item.priority} />
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1.5">
+                            <Avatar size="sm">
+                              <AvatarFallback>{getProfile(item.ownerId).initials}</AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm text-muted-foreground">
+                              {getProfile(item.ownerId).name}
                             </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="max-w-40 truncate text-muted-foreground">
-                        {item.initiativeId
-                          ? (initiatives.find((i) => i.id === item.initiativeId)?.name ?? "—")
-                          : "—"}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">{item.type}</TableCell>
-                      <TableCell className="text-muted-foreground">{item.impact}</TableCell>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
+                          </div>
+                        </TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <Select
+                            value={item.status}
+                            onValueChange={(v) => v && updateWorkItemStatus(item.id, v as WorkStatus)}
+                          >
+                            <SelectTrigger size="sm" className="border-none bg-transparent p-0 shadow-none">
+                              <StatusBadge status={item.status} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {WORK_STATUSES.map((s) => (
+                                <SelectItem key={s} value={s}>{s}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell className="font-mono text-xs text-muted-foreground">
+                          {item.jiraId ?? "—"}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {formatDueDate(item.dueDate)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Cards — phones only. */}
+              <div className="flex flex-col gap-2 md:hidden">
+                {filtered.map((item) => (
+                  // A native <button> can't be used here — the Select below
+                  // renders its own <button> trigger, and nested interactive
+                  // buttons are invalid HTML. A div with a click handler
+                  // (same pattern as the desktop table's clickable <tr>)
+                  // avoids that while staying keyboard-accessible.
+                  <div
+                    key={item.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setSelectedId(item.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") setSelectedId(item.id);
+                    }}
+                    className="flex cursor-pointer flex-col gap-2 rounded-lg border border-border bg-card px-4 py-3 text-left transition-colors hover:border-brand-indigo/40"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="truncate text-sm font-medium text-foreground">{item.title}</span>
+                      {item.blocked && <BlockedBadge />}
+                    </div>
+                    {item.expectedImpact && (
+                      <span className="truncate text-xs text-muted-foreground">{item.expectedImpact}</span>
+                    )}
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span className="truncate">
+                        {item.type}
+                        {item.initiativeId && (
+                          <>
+                            {" · "}
+                            {initiatives.find((i) => i.id === item.initiativeId)?.name ?? ""}
+                          </>
+                        )}
+                      </span>
+                      <span className="shrink-0">{formatDueDate(item.dueDate)}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex min-w-0 items-center gap-1.5">
+                        <Avatar size="sm">
+                          <AvatarFallback>{getProfile(item.ownerId).initials}</AvatarFallback>
+                        </Avatar>
+                        <span className="truncate text-xs text-muted-foreground">
+                          {getProfile(item.ownerId).name}
+                        </span>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2" onClick={(e) => e.stopPropagation()}>
                         <PriorityBadge priority={item.priority} />
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1.5">
-                          <Avatar size="sm">
-                            <AvatarFallback>{getProfile(item.ownerId).initials}</AvatarFallback>
-                          </Avatar>
-                          <span className="text-sm text-muted-foreground">
-                            {getProfile(item.ownerId).name}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
                         <Select
                           value={item.status}
                           onValueChange={(v) => v && updateWorkItemStatus(item.id, v as WorkStatus)}
@@ -233,18 +311,12 @@ export default function BacklogPage() {
                             ))}
                           </SelectContent>
                         </Select>
-                      </TableCell>
-                      <TableCell className="font-mono text-xs text-muted-foreground">
-                        {item.jiraId ?? "—"}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {formatDueDate(item.dueDate)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           ) : (
             <KanbanBoard items={filtered} onOpen={setSelectedId} />
           )}

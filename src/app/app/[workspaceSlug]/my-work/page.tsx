@@ -39,9 +39,11 @@ function itemsForTab(items: WorkItem[], tab: Tab): WorkItem[] {
     case "Overdue":
       return items.filter(isOverdue);
     case "Blocked":
-      // Blocked and Completed are mutually exclusive — once an item is
-      // completed, a stale blocker flag shouldn't double-count it here.
-      return items.filter((w) => w.blocked && w.status !== "Completed");
+      // Blocked is independent of status — a task marked blocked shows up
+      // here regardless of whether it's also Completed. Tabs are filtered
+      // views, not mutually-exclusive buckets, so an item can appear under
+      // both Blocked and Completed at once.
+      return items.filter((w) => w.blocked);
     case "Completed":
       return items.filter((w) => w.status === "Completed");
     default:
