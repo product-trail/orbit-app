@@ -1,4 +1,3 @@
-import { notFound } from "next/navigation";
 import { getAdminAnalytics } from "@/lib/data/admin-analytics";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,13 +11,29 @@ export const dynamic = "force-dynamic";
  * Founder-only product analytics: signups + cross-workspace activity.
  * Not linked anywhere in the app nav — reached only by typing /admin
  * directly, and even then gated to an allow-listed email (ADMIN_EMAILS env
- * var) rather than any in-app role. Anyone else gets the same 404 as a
- * route that doesn't exist, both signed out and signed in as a regular user.
+ * var) rather than any in-app role. Anyone else signed in as a non-admin
+ * account sees a plain "not authorized" message (with their own email, so
+ * they can spot a typo'd allowlist entry or a wrong-account login) instead
+ * of the dashboard — signed-out visitors never reach this far, since
+ * proxy.ts redirects them to /login first.
  */
 export default async function AdminAnalyticsPage() {
-  const data = await getAdminAnalytics();
-  if (!data) notFound();
+  const result = await getAdminAnalytics();
 
+  if (!result.authorized) {
+    return (
+      <div className="mx-auto flex w-full max-w-md flex-col gap-2 px-6 py-16 text-center">
+        <h1 className="text-lg font-semibold text-foreground">Not authorized</h1>
+        <p className="text-sm text-muted-foreground">
+          {result.viewerEmail
+            ? <>Signed in as <span className="font-medium text-foreground">{result.viewerEmail}</span> — this account isn&apos;t on the admin allowlist.</>
+            : "You need to be signed in to view this page."}
+        </p>
+      </div>
+    );
+  }
+
+  const data = result.data;
   const maxDaily = Math.max(1, ...data.dailyActivity.map((d) => d.count));
 
   return (

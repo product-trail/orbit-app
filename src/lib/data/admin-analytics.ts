@@ -55,17 +55,26 @@ export type AdminAnalytics = {
   }[];
 };
 
+export type AdminAnalyticsResult =
+  | { authorized: true; data: AdminAnalytics }
+  | { authorized: false; viewerEmail: string | null };
+
 /**
- * Returns null for anyone who isn't signed in as an allow-listed admin —
- * callers should 404 rather than distinguish "not signed in" from "signed in
- * but not admin" (same treatment as getWorkspaceSnapshot's null case).
+ * `authorized: false` covers both "not signed in" (won't actually happen in
+ * practice — proxy.ts redirects signed-out visitors to /login before this
+ * ever runs) and "signed in but not on the ADMIN_EMAILS allowlist". We still
+ * surface the signer-in's own email in that case — it's their own session
+ * info, not a secret, and it's the only way to debug a typo'd allowlist
+ * entry or a "signed in with the wrong account" mistake.
  */
-export async function getAdminAnalytics(): Promise<AdminAnalytics | null> {
+export async function getAdminAnalytics(): Promise<AdminAnalyticsResult> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user || !isAdminEmail(user.email)) return null;
+  if (!user || !isAdminEmail(user.email)) {
+    return { authorized: false, viewerEmail: user?.email ?? null };
+  }
 
   const admin = createAdminClient();
 
@@ -125,34 +134,37 @@ export async function getAdminAnalytics(): Promise<AdminAnalytics | null> {
   const initiativeCounts = countByWorkspace(initiatives);
 
   return {
-    viewerEmail: user.email ?? "",
-    totals: {
-      signups: profiles.length,
-      workspaces: workspaces.length,
-      activeToday: activeSince(now - dayMs),
-      activeThisWeek: activeSince(now - 7 * dayMs),
-      activeThisMonth: activeSince(now - 30 * dayMs),
+    authorized: true,
+    data: {
+      viewerEmail: user.email ?? "",
+      totals: {
+        signups: profiles.length,
+        workspaces: workspaces.length,
+        activeToday: activeSince(now - dayMs),
+        activeThisWeek: activeSince(now - 7 * dayMs),
+        activeThisMonth: activeSince(now - 30 * dayMs),
+      },
+      dailyActivity,
+      recentSignups: profiles.slice(0, 30).map((p) => {
+        const authUser = usersById.get(p.id);
+        return {
+          id: p.id,
+          name: p.name,
+          email: authUser?.email ?? null,
+          createdAt: p.created_at,
+          lastSignInAt: authUser?.last_sign_in_at ?? null,
+        };
+      }),
+      workspaces: workspaces.map((w) => ({
+        id: w.id,
+        name: w.name,
+        slug: w.slug,
+        createdAt: w.created_at,
+        memberCount: memberCounts.get(w.id) ?? 0,
+        workItemCount: workItemCounts.get(w.id) ?? 0,
+        ideaCount: ideaCounts.get(w.id) ?? 0,
+        initiativeCount: initiativeCounts.get(w.id) ?? 0,
+      })),
     },
-    dailyActivity,
-    recentSignups: profiles.slice(0, 30).map((p) => {
-      const authUser = usersById.get(p.id);
-      return {
-        id: p.id,
-        name: p.name,
-        email: authUser?.email ?? null,
-        createdAt: p.created_at,
-        lastSignInAt: authUser?.last_sign_in_at ?? null,
-      };
-    }),
-    workspaces: workspaces.map((w) => ({
-      id: w.id,
-      name: w.name,
-      slug: w.slug,
-      createdAt: w.created_at,
-      memberCount: memberCounts.get(w.id) ?? 0,
-      workItemCount: workItemCounts.get(w.id) ?? 0,
-      ideaCount: ideaCounts.get(w.id) ?? 0,
-      initiativeCount: initiativeCounts.get(w.id) ?? 0,
-    })),
   };
 }
