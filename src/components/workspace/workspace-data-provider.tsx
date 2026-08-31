@@ -81,6 +81,7 @@ type WorkspaceDataValue = {
   updateWorkItemInitiative: (id: string, initiativeId: string | null) => void;
   updateWorkItemExpectedImpact: (id: string, expectedImpact: string | null) => void;
   createWorkItem: (input: NewWorkItemInput) => Promise<WorkItem>;
+  deleteWorkItem: (id: string) => Promise<void>;
   addComment: (workItemId: string, content: string) => Promise<void>;
   createIdea: (input: NewIdeaInput) => Promise<Idea>;
   updateIdeaStatus: (id: string, status: IdeaStatus) => void;
@@ -435,6 +436,22 @@ export function WorkspaceDataProvider({
         setWorkItems((prev) => [item, ...prev]);
         logActivity({ entityType: "work_item", entityId: item.id, action: "created this work item" });
         return item;
+      },
+
+      deleteWorkItem: async (id) => {
+        const { error } = await supabase.from("work_items").delete().eq("id", id);
+        if (error) {
+          throw new Error(error.message ?? "Couldn't delete work item.");
+        }
+        // Comments cascade in the DB automatically (on delete cascade), but
+        // our local state doesn't know that — drop them here too, along
+        // with this item's own activity log entries, so the UI doesn't hang
+        // on to references to a row that no longer exists.
+        setWorkItems((prev) => prev.filter((item) => item.id !== id));
+        setComments((prev) => prev.filter((c) => c.workItemId !== id));
+        setActivityLogs((prev) =>
+          prev.filter((a) => !(a.entityType === "work_item" && a.entityId === id)),
+        );
       },
 
       addComment: async (workItemId, content) => {

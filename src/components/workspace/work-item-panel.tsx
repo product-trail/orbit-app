@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle, ExternalLink, Plus } from "lucide-react";
+import { AlertTriangle, ExternalLink, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useWorkspaceData } from "@/components/workspace/workspace-data-provider";
 import { PRIORITIES, WORK_STATUSES } from "@/components/workspace/badges";
@@ -12,6 +12,15 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -49,6 +58,7 @@ export function WorkItemPanel({
     updateWorkItemExpectedImpact,
     toggleWorkItemBlocked,
     addComment,
+    deleteWorkItem,
   } = useWorkspaceData();
 
   const [commentDraft, setCommentDraft] = useState("");
@@ -61,6 +71,8 @@ export function WorkItemPanel({
   const [jiraIdDraft, setJiraIdDraft] = useState("");
   const [addingBlocker, setAddingBlocker] = useState(false);
   const [blockerDraft, setBlockerDraft] = useState("");
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const item = workItems.find((w) => w.id === itemId) ?? null;
   const itemComments = comments
@@ -75,8 +87,19 @@ export function WorkItemPanel({
       <SheetContent className="w-full gap-0 overflow-y-auto p-0 sm:max-w-lg">
         {item && (
           <>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="absolute top-3 right-12 text-muted-foreground hover:text-danger"
+              onClick={() => setConfirmDeleteOpen(true)}
+              aria-label="Delete work item"
+            >
+              <Trash2 className="size-4" />
+            </Button>
+
             <SheetHeader className="border-b border-border pb-4">
-              <SheetTitle className="pr-8 text-lg leading-snug">{item.title}</SheetTitle>
+              <SheetTitle className="pr-16 text-lg leading-snug">{item.title}</SheetTitle>
               <SheetDescription className="sr-only">Work item detail</SheetDescription>
               <span className="text-xs text-muted-foreground">{item.type}</span>
             </SheetHeader>
@@ -450,6 +473,42 @@ export function WorkItemPanel({
                 {item.completedAt && ` · Completed ${formatDueDate(item.completedAt.slice(0, 10))}`}
               </p>
             </div>
+
+            <Dialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Delete this work item?</DialogTitle>
+                  <DialogDescription>
+                    &ldquo;{item.title}&rdquo; and its comments will be permanently deleted. This
+                    can&apos;t be undone.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <DialogClose render={<Button variant="outline">Cancel</Button>} />
+                  <Button
+                    variant="destructive"
+                    disabled={deleting}
+                    onClick={async () => {
+                      setDeleting(true);
+                      try {
+                        await deleteWorkItem(item.id);
+                        toast.success("Work item deleted", { description: item.title });
+                        setConfirmDeleteOpen(false);
+                        onClose();
+                      } catch (error) {
+                        toast.error("Couldn't delete work item", {
+                          description: error instanceof Error ? error.message : undefined,
+                        });
+                      } finally {
+                        setDeleting(false);
+                      }
+                    }}
+                  >
+                    {deleting ? "Deleting…" : "Delete"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </>
         )}
       </SheetContent>
