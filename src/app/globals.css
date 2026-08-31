@@ -58,6 +58,8 @@
   --color-warning-foreground: var(--warning-foreground);
   --color-danger: var(--danger);
   --color-danger-foreground: var(--danger-foreground);
+  --color-teal: var(--teal);
+  --color-teal-foreground: var(--teal-foreground);
 
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
@@ -116,6 +118,8 @@
   --warning-foreground: #78350f;
   --danger: #f87171;
   --danger-foreground: #ffffff;
+  --teal: #14b8a6;
+  --teal-foreground: #ffffff;
 
   --chart-1: #6366f1;
   --chart-2: #8b5cf6;
@@ -178,6 +182,8 @@
   --warning-foreground: #1c1502;
   --danger: #f87171;
   --danger-foreground: #1c0a08;
+  --teal: #2dd4bf;
+  --teal-foreground: #042f2c;
 
   --chart-1: #6366f1;
   --chart-2: #8b5cf6;

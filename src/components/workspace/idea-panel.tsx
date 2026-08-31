@@ -73,7 +73,7 @@ export function IdeaPanel({
                 </Field>
 
                 <Field label="Product Area">
-                  <span className="text-sm text-foreground">{idea.productArea ?? "—"}</span>
+                  <span className="text-sm text-foreground">{idea.productArea ?? "-"}</span>
                 </Field>
               </div>
 

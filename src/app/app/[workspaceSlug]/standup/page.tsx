@@ -34,7 +34,7 @@ export default function StandupPage() {
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-6 py-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Standup</h1>
-        <p className="text-sm text-muted-foreground">Postpaid Team Standup — async, no meeting required.</p>
+        <p className="text-sm text-muted-foreground">Postpaid Team Standup - async, no meeting required.</p>
       </div>
 
       <Tabs value={tab} onValueChange={(v) => v && setTab(v as "today" | "history")}>

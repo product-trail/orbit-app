@@ -123,7 +123,7 @@ export function NewWorkItemDialog({
         <DialogHeader>
           <DialogTitle>New work item</DialogTitle>
           <DialogDescription>
-            Create product work — it doesn&apos;t need a JIRA ticket.
+            Create product work - it doesn&apos;t need a JIRA ticket.
           </DialogDescription>
         </DialogHeader>
 

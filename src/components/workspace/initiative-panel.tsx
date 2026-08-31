@@ -59,16 +59,16 @@ export function InitiativePanel({
 
               <div className="grid grid-cols-3 gap-4">
                 <Field label="Metric">
-                  <span className="text-sm text-foreground">{initiative.metric ?? "—"}</span>
+                  <span className="text-sm text-foreground">{initiative.metric ?? "-"}</span>
                 </Field>
                 <Field label="Current">
                   <span className="text-sm font-medium text-foreground">
-                    {initiative.currentValue ?? "—"}
+                    {initiative.currentValue ?? "-"}
                   </span>
                 </Field>
                 <Field label="Target">
                   <span className="text-sm font-medium text-brand-indigo">
-                    {initiative.targetValue ?? "—"}
+                    {initiative.targetValue ?? "-"}
                   </span>
                 </Field>
               </div>

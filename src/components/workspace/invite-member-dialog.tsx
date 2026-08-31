@@ -87,7 +87,7 @@ export function InviteMemberDialog({ trigger }: { trigger?: React.ReactElement }
         <DialogHeader>
           <DialogTitle>Invite a team member</DialogTitle>
           <DialogDescription>
-            Add them as a workspace member — an invite is sent to their email.
+            Add them as a workspace member - an invite is sent to their email.
           </DialogDescription>
         </DialogHeader>
 

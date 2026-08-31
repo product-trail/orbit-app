@@ -26,7 +26,7 @@ export default async function AdminAnalyticsPage() {
         <h1 className="text-lg font-semibold text-foreground">Not authorized</h1>
         <p className="text-sm text-muted-foreground">
           {result.viewerEmail
-            ? <>Signed in as <span className="font-medium text-foreground">{result.viewerEmail}</span> — this account isn&apos;t on the admin allowlist.</>
+            ? <>Signed in as <span className="font-medium text-foreground">{result.viewerEmail}</span> - this account isn&apos;t on the admin allowlist.</>
             : "You need to be signed in to view this page."}
         </p>
       </div>
@@ -41,7 +41,7 @@ export default async function AdminAnalyticsPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Orbit Analytics</h1>
         <p className="text-sm text-muted-foreground">
-          Signed in as {data.viewerEmail} — this view isn&apos;t linked anywhere in the app.
+          Signed in as {data.viewerEmail} - this view isn&apos;t linked anywhere in the app.
         </p>
       </div>
 
@@ -64,7 +64,7 @@ export default async function AdminAnalyticsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Activity — last 14 days</CardTitle>
+          <CardTitle>Activity - last 14 days</CardTitle>
         </CardHeader>
         <CardContent className="flex items-end gap-1.5 pt-2 pb-6" style={{ height: 120 }}>
           {data.dailyActivity.map((d) => (
@@ -136,7 +136,7 @@ export default async function AdminAnalyticsPage() {
               {data.recentSignups.map((s) => (
                 <TableRow key={s.id}>
                   <TableCell className="font-medium text-foreground">{s.name}</TableCell>
-                  <TableCell className="text-muted-foreground">{s.email ?? "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">{s.email ?? "-"}</TableCell>
                   <TableCell className="text-muted-foreground">{timeAgo(s.createdAt)}</TableCell>
                   <TableCell className="text-muted-foreground">
                     {s.lastSignInAt ? timeAgo(s.lastSignInAt) : "Never"}

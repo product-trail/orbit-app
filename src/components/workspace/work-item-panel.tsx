@@ -176,7 +176,7 @@ export function WorkItemPanel({
                 </Field>
 
                 <Field label="Product Area">
-                  <span className="text-sm text-foreground">{item.productArea ?? "—"}</span>
+                  <span className="text-sm text-foreground">{item.productArea ?? "-"}</span>
                 </Field>
               </div>
 

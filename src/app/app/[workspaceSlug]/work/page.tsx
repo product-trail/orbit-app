@@ -55,7 +55,7 @@ export default function BacklogPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">Product Backlog</h1>
           <p className="text-sm text-muted-foreground">
-            Everything the team is working on — with or without a JIRA ticket.
+            Everything the team is working on - with or without a JIRA ticket.
           </p>
         </div>
         <NewWorkItemDialog />
@@ -65,7 +65,7 @@ export default function BacklogPage() {
         <EmptyState
           icon={ListTodo}
           title="No work items yet"
-          description="Create your first piece of product work — analysis, a PRD, a stakeholder follow-up, anything that isn't a JIRA ticket yet."
+          description="Create your first piece of product work - analysis, a PRD, a stakeholder follow-up, anything that isn't a JIRA ticket yet."
           action={<NewWorkItemDialog trigger={<Button size="sm">+ Add work item</Button>} />}
         />
       ) : (
@@ -205,8 +205,8 @@ export default function BacklogPage() {
                         </TableCell>
                         <TableCell className="max-w-40 truncate text-muted-foreground">
                           {item.initiativeId
-                            ? (initiatives.find((i) => i.id === item.initiativeId)?.name ?? "—")
-                            : "—"}
+                            ? (initiatives.find((i) => i.id === item.initiativeId)?.name ?? "-")
+                            : "-"}
                         </TableCell>
                         <TableCell className="text-muted-foreground">{item.type}</TableCell>
                         <TableCell className="text-muted-foreground">{item.impact}</TableCell>
@@ -239,7 +239,7 @@ export default function BacklogPage() {
                           </Select>
                         </TableCell>
                         <TableCell className="font-mono text-xs text-muted-foreground">
-                          {item.jiraId ?? "—"}
+                          {item.jiraId ?? "-"}
                         </TableCell>
                         <TableCell className="text-muted-foreground">
                           {formatDueDate(item.dueDate)}

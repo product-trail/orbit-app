@@ -99,7 +99,7 @@ export function StandupForm({
             id="su-blocked"
             value={blocked}
             onChange={(e) => setBlocked(e.target.value)}
-            placeholder="One item per line — leave blank if nothing's blocked"
+            placeholder="One item per line - leave blank if nothing's blocked"
             rows={2}
           />
         </div>

@@ -22,10 +22,13 @@ export type WorkType =
 export type WorkStatus =
   | "Backlog"
   | "In Progress"
+  | "In Design"
   | "In PRD"
+  | "PRD Complete"
   | "Ready for Tech Walkthrough"
   | "In Development"
   | "QA / Validation"
+  | "Blocked"
   | "Completed";
 
 export type WorkPriority = "P0" | "P1" | "P2" | "P3";

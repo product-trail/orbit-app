@@ -57,7 +57,7 @@ export default function IdeasPage() {
         <EmptyState
           icon={Lightbulb}
           title="No ideas yet"
-          description="Capture your first idea — it doesn't need to be fully formed yet."
+          description="Capture your first idea - it doesn't need to be fully formed yet."
           action={<NewIdeaDialog trigger={<Button size="sm">+ New Idea</Button>} />}
         />
       ) : (

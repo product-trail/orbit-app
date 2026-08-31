@@ -5,10 +5,13 @@ import type { IdeaStatus, InitiativeStatus, Priority, WorkStatus } from "@/lib/m
 const STATUS_STYLES: Record<WorkStatus, string> = {
   Backlog: "bg-muted text-muted-foreground",
   "In Progress": "bg-brand-indigo/10 text-brand-indigo",
+  "In Design": "bg-secondary text-secondary-foreground",
   "In PRD": "bg-accent text-accent-foreground",
+  "PRD Complete": "bg-teal/10 text-teal",
   "Ready for Tech Walkthrough": "bg-brand-purple/10 text-brand-purple",
   "In Development": "bg-info/10 text-info",
   "QA / Validation": "bg-warning/10 text-warning",
+  Blocked: "bg-danger/10 text-danger",
   Completed: "bg-success/10 text-success",
 };
 
@@ -75,10 +78,13 @@ export function BlockedBadge() {
 export const WORK_STATUSES: WorkStatus[] = [
   "Backlog",
   "In Progress",
+  "In Design",
   "In PRD",
+  "PRD Complete",
   "Ready for Tech Walkthrough",
   "In Development",
   "QA / Validation",
+  "Blocked",
   "Completed",
 ];
 
