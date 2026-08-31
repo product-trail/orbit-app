@@ -41,9 +41,21 @@ export function GlobalSearch({ slug }: { slug: string }) {
 
   return (
     <>
+      {/* Icon-only trigger on small screens so the search control doesn't
+          crowd out the workspace name / logo in the header; the full
+          labeled bar only appears from `sm:` up where there's room. */}
       <Button
         variant="outline"
-        className="w-full max-w-xs justify-start gap-2 text-muted-foreground sm:w-56"
+        size="icon"
+        aria-label="Search Orbits"
+        className="shrink-0 text-muted-foreground sm:hidden"
+        onClick={() => setOpen(true)}
+      >
+        <Search className="size-4" />
+      </Button>
+      <Button
+        variant="outline"
+        className="hidden w-56 justify-start gap-2 text-muted-foreground sm:flex"
         onClick={() => setOpen(true)}
       >
         <Search className="size-4" />

@@ -8,6 +8,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { OrbitLogo } from "@/components/brand/orbit-logo";
 import { GoogleIcon } from "@/components/auth/google-icon";
+import { AuthLoadingOverlay } from "@/components/auth/auth-loading-overlay";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,7 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [pendingAction, setPendingAction] = useState<"password" | "google" | null>(null);
 
   const emailValid = EMAIL_RE.test(email.trim());
   const passwordValid = password.length >= MIN_PASSWORD_LENGTH;
@@ -36,6 +38,7 @@ export default function SignupPage() {
 
   const signUpWithGoogle = async () => {
     setSubmitting(true);
+    setPendingAction("google");
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -45,6 +48,7 @@ export default function SignupPage() {
     });
     if (error) {
       setSubmitting(false);
+      setPendingAction(null);
       toast.error("Google sign-up failed", { description: error.message });
     }
     // On success the browser navigates away to Google, so nothing else to do here.
@@ -54,6 +58,7 @@ export default function SignupPage() {
     e.preventDefault();
     if (!canSubmit) return;
     setSubmitting(true);
+    setPendingAction("password");
 
     const supabase = createClient();
     const { data, error } = await supabase.auth.signUp({
@@ -67,6 +72,7 @@ export default function SignupPage() {
 
     if (error) {
       setSubmitting(false);
+      setPendingAction(null);
       toast.error("Couldn't create account", { description: error.message });
       return;
     }
@@ -81,6 +87,7 @@ export default function SignupPage() {
         description: `We've sent a confirmation link to ${email.trim()}.`,
       });
       setSubmitting(false);
+      setPendingAction(null);
       router.push("/login");
       return;
     }
@@ -88,10 +95,20 @@ export default function SignupPage() {
     toast.success("Account created");
     router.push("/app");
     router.refresh();
+    // Deliberately not clearing `submitting`/`pendingAction` here — the
+    // overlay should stay up through the redirect + destination page's own
+    // data fetch, rather than flashing back to the form for a moment.
   };
 
   return (
     <div className="flex flex-col gap-6">
+      {submitting && (
+        <AuthLoadingOverlay
+          title={pendingAction === "google" ? "Redirecting to Google…" : "Creating your account…"}
+          description="Just a moment while we set up your workspace."
+        />
+      )}
+
       <div className="flex flex-col items-center gap-4 text-center">
         <OrbitLogo />
         <div className="flex flex-col gap-1">

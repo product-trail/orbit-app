@@ -212,3 +212,38 @@
     @apply font-sans;
   }
 }
+
+/*
+ * Orbit loading animation — small bodies circling a central "planet",
+ * used on the login/signup screens (and anywhere else a network call needs
+ * an on-brand loading state) so waiting reads as "in progress" instead of
+ * "frozen". Plain CSS keyframes (not tw-animate-css) since this is a
+ * bespoke, product-specific animation rather than a generic UI transition.
+ */
+@keyframes orbit-spin-cw {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes orbit-spin-ccw {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+@keyframes orbit-pulse {
+  0%,
+  100% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}

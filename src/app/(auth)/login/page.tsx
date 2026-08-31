@@ -8,6 +8,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { OrbitLogo } from "@/components/brand/orbit-logo";
 import { GoogleIcon } from "@/components/auth/google-icon";
+import { AuthLoadingOverlay } from "@/components/auth/auth-loading-overlay";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,12 +34,14 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [pendingAction, setPendingAction] = useState<"password" | "google" | null>(null);
 
   const canSubmit = EMAIL_RE.test(email.trim()) && password.length > 0 && !submitting;
   const nextPath = searchParams.get("next");
 
   const signInWithGoogle = async () => {
     setSubmitting(true);
+    setPendingAction("google");
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -48,6 +51,7 @@ function LoginForm() {
     });
     if (error) {
       setSubmitting(false);
+      setPendingAction(null);
       toast.error("Google sign-in failed", { description: error.message });
     }
     // On success the browser navigates away to Google, so nothing else to do here.
@@ -57,6 +61,7 @@ function LoginForm() {
     e.preventDefault();
     if (!canSubmit) return;
     setSubmitting(true);
+    setPendingAction("password");
 
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({
@@ -66,6 +71,7 @@ function LoginForm() {
 
     if (error) {
       setSubmitting(false);
+      setPendingAction(null);
       toast.error("Couldn't sign in", { description: error.message });
       return;
     }
@@ -73,10 +79,20 @@ function LoginForm() {
     toast.success("Signed in");
     router.push(nextPath || "/app");
     router.refresh();
+    // Deliberately not clearing `submitting`/`pendingAction` here — the
+    // overlay should stay up through the redirect + destination page's own
+    // data fetch, rather than flashing back to the form for a moment.
   };
 
   return (
     <div className="flex flex-col gap-6">
+      {submitting && (
+        <AuthLoadingOverlay
+          title={pendingAction === "google" ? "Redirecting to Google…" : "Signing you in…"}
+          description="Just a moment while we get your workspace ready."
+        />
+      )}
+
       <div className="flex flex-col items-center gap-4 text-center">
         <OrbitLogo />
         <div className="flex flex-col gap-1">

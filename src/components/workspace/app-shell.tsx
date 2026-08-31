@@ -134,7 +134,11 @@ export function AppShell({
 
       <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">
         <header className="sticky top-0 z-20 flex items-center justify-between gap-2 border-b border-border bg-background px-4 py-3 sm:gap-4 sm:px-6">
-          <div className="min-w-0">
+          <div className="flex min-w-0 items-center gap-2">
+            {/* The sidebar (which normally carries the Orbits mark) is
+                hidden below `md:`, so surface the mark here on mobile
+                instead of leaving the header unbranded. */}
+            <OrbitSymbol size={24} className="shrink-0 md:hidden" />
             <p className="truncate text-sm font-semibold text-foreground">{workspace.name}</p>
           </div>
           <div className="flex flex-1 items-center justify-end gap-1 sm:gap-2">
