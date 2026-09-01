@@ -77,6 +77,7 @@ type WorkspaceDataValue = {
   updateWorkItemDueDate: (id: string, dueDate: string | null) => void;
   updateWorkItemDescription: (id: string, description: string) => void;
   updateWorkItemJira: (id: string, jiraId: string | null, jiraUrl: string | null) => void;
+  updateWorkItemProductArea: (id: string, productArea: string | null) => void;
   toggleWorkItemBlocked: (id: string, blocked: boolean, description?: string) => void;
   updateWorkItemInitiative: (id: string, initiativeId: string | null) => void;
   updateWorkItemExpectedImpact: (id: string, expectedImpact: string | null) => void;
@@ -303,6 +304,31 @@ export function WorkspaceDataProvider({
           if (error) {
             setWorkItems((prev) => prev.map((item) => (item.id === id ? previous : item)));
             toast.error("Couldn't update JIRA link", { description: error.message });
+          }
+        })();
+      },
+
+      updateWorkItemProductArea: (id, productArea) => {
+        const previous = workItems.find((w) => w.id === id);
+        if (!previous) return;
+        setWorkItems((prev) =>
+          prev.map((item) =>
+            item.id === id ? { ...item, productArea, updatedAt: nowIso() } : item,
+          ),
+        );
+        logActivity({
+          entityType: "work_item",
+          entityId: id,
+          action: productArea ? `set product area: ${productArea}` : "cleared product area",
+        });
+        void (async () => {
+          const { error } = await supabase
+            .from("work_items")
+            .update({ product_area: productArea })
+            .eq("id", id);
+          if (error) {
+            setWorkItems((prev) => prev.map((item) => (item.id === id ? previous : item)));
+            toast.error("Couldn't update product area", { description: error.message });
           }
         })();
       },

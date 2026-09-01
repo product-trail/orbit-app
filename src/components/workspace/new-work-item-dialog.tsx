@@ -61,6 +61,8 @@ export function NewWorkItemDialog({
   const [dueDate, setDueDate] = useState("");
   const [selectedInitiativeId, setSelectedInitiativeId] = useState(NO_INITIATIVE);
   const [expectedImpact, setExpectedImpact] = useState("");
+  const [jiraId, setJiraId] = useState("");
+  const [productArea, setProductArea] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   // When this dialog is opened from within an initiative's own page,
@@ -78,6 +80,8 @@ export function NewWorkItemDialog({
     setDueDate("");
     setSelectedInitiativeId(NO_INITIATIVE);
     setExpectedImpact("");
+    setJiraId("");
+    setProductArea("");
   };
 
   const submit = async () => {
@@ -94,6 +98,9 @@ export function NewWorkItemDialog({
         dueDate: dueDate || null,
         initiativeId: initiativeId ?? (selectedInitiativeId === NO_INITIATIVE ? undefined : selectedInitiativeId),
         expectedImpact: expectedImpact.trim() || undefined,
+        jiraId: jiraId.trim() || undefined,
+        jiraUrl: jiraId.trim() ? `https://jira.example.com/browse/${jiraId.trim()}` : undefined,
+        productArea: productArea.trim() || undefined,
       });
       toast.success("Work item created", { description: title.trim() });
       setOpen(false);
@@ -203,13 +210,33 @@ export function NewWorkItemDialog({
               </Select>
             </div>
 
-            <div className="col-span-2 flex flex-col gap-1.5">
+            <div className="flex flex-col gap-1.5">
               <Label htmlFor="wi-due">Due date</Label>
               <Input
                 id="wi-due"
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="wi-product-area">Product area</Label>
+              <Input
+                id="wi-product-area"
+                value={productArea}
+                onChange={(e) => setProductArea(e.target.value)}
+                placeholder="Billing"
+              />
+            </div>
+
+            <div className="col-span-2 flex flex-col gap-1.5">
+              <Label htmlFor="wi-jira">JIRA ID (optional)</Label>
+              <Input
+                id="wi-jira"
+                value={jiraId}
+                onChange={(e) => setJiraId(e.target.value)}
+                placeholder="PP-1234"
               />
             </div>
 

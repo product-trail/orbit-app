@@ -54,6 +54,7 @@ export function WorkItemPanel({
     updateWorkItemDueDate,
     updateWorkItemDescription,
     updateWorkItemJira,
+    updateWorkItemProductArea,
     updateWorkItemInitiative,
     updateWorkItemExpectedImpact,
     toggleWorkItemBlocked,
@@ -69,6 +70,8 @@ export function WorkItemPanel({
   const [expectedImpactDraft, setExpectedImpactDraft] = useState("");
   const [addingJira, setAddingJira] = useState(false);
   const [jiraIdDraft, setJiraIdDraft] = useState("");
+  const [editingProductArea, setEditingProductArea] = useState(false);
+  const [productAreaDraft, setProductAreaDraft] = useState("");
   const [addingBlocker, setAddingBlocker] = useState(false);
   const [blockerDraft, setBlockerDraft] = useState("");
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -176,7 +179,45 @@ export function WorkItemPanel({
                 </Field>
 
                 <Field label="Product Area">
-                  <span className="text-sm text-foreground">{item.productArea ?? "-"}</span>
+                  {editingProductArea ? (
+                    <div className="flex gap-2">
+                      <Input
+                        value={productAreaDraft}
+                        onChange={(e) => setProductAreaDraft(e.target.value)}
+                        placeholder="Billing"
+                        className="h-8"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            updateWorkItemProductArea(item.id, productAreaDraft.trim() || null);
+                            setEditingProductArea(false);
+                          } else if (e.key === "Escape") {
+                            setEditingProductArea(false);
+                          }
+                        }}
+                      />
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          updateWorkItemProductArea(item.id, productAreaDraft.trim() || null);
+                          setEditingProductArea(false);
+                        }}
+                      >
+                        Save
+                      </Button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="w-fit text-sm text-foreground hover:text-brand-indigo hover:underline"
+                      onClick={() => {
+                        setProductAreaDraft(item.productArea ?? "");
+                        setEditingProductArea(true);
+                      }}
+                    >
+                      {item.productArea ?? "Set product area"}
+                    </button>
+                  )}
                 </Field>
               </div>
 
@@ -295,17 +336,40 @@ export function WorkItemPanel({
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <p className="text-xs font-medium text-muted-foreground">JIRA</p>
-                {item.jiraId ? (
-                  <a
-                    href={item.jiraUrl ?? "#"}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex w-fit items-center gap-1.5 rounded-md bg-muted px-2 py-1 font-mono text-xs text-foreground hover:text-brand-indigo"
-                  >
-                    {item.jiraId}
-                    <ExternalLink className="size-3" />
-                  </a>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-medium text-muted-foreground">JIRA</p>
+                  {item.jiraId && !addingJira && (
+                    <button
+                      type="button"
+                      className="text-xs font-medium text-brand-indigo hover:underline"
+                      onClick={() => {
+                        setJiraIdDraft(item.jiraId ?? "");
+                        setAddingJira(true);
+                      }}
+                    >
+                      Edit
+                    </button>
+                  )}
+                </div>
+                {item.jiraId && !addingJira ? (
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={item.jiraUrl ?? "#"}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex w-fit items-center gap-1.5 rounded-md bg-muted px-2 py-1 font-mono text-xs text-foreground hover:text-brand-indigo"
+                    >
+                      {item.jiraId}
+                      <ExternalLink className="size-3" />
+                    </a>
+                    <button
+                      type="button"
+                      className="text-xs font-medium text-danger hover:underline"
+                      onClick={() => updateWorkItemJira(item.id, null, null)}
+                    >
+                      Remove
+                    </button>
+                  </div>
                 ) : addingJira ? (
                   <div className="flex gap-2">
                     <Input
@@ -327,7 +391,7 @@ export function WorkItemPanel({
                         setJiraIdDraft("");
                       }}
                     >
-                      Add
+                      {item.jiraId ? "Save" : "Add"}
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => setAddingJira(false)}>
                       Cancel

@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { OrbitSymbol } from "@/components/brand/orbit-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { WorkspaceSwitcher } from "@/components/workspace/workspace-switcher";
-import { GlobalSearch } from "@/components/workspace/global-search";
 import { useWorkspaceData } from "@/components/workspace/workspace-data-provider";
 import { NAV_ITEMS, SETTINGS_ITEM } from "@/components/workspace/nav-config";
 import { createClient } from "@/lib/supabase/client";
@@ -142,7 +141,6 @@ export function AppShell({
             <p className="truncate text-sm font-semibold text-foreground">{workspace.name}</p>
           </div>
           <div className="flex flex-1 items-center justify-end gap-1 sm:gap-2">
-            <GlobalSearch slug={slug} />
             <Button
               variant="ghost"
               size="icon"
