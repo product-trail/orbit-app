@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import Script from "next/script";
 import { ThemeProvider } from "@/components/theme-provider";
+import { PwaRegister } from "@/components/pwa-register";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { THEME_STORAGE_KEY } from "@/lib/theme-constants";
@@ -39,6 +40,22 @@ export const metadata: Metadata = {
   title: "Orbits - Where product work comes together",
   description:
     "The operating layer for product teams to manage the work that doesn't fit cleanly into JIRA.",
+  icons: {
+    icon: "/icon-512.png",
+    apple: "/apple-touch-icon.png",
+  },
+  appleWebApp: {
+    title: "Orbits",
+    statusBarStyle: "black-translucent",
+  },
+};
+
+// PWA installability (spec: Android/iOS "Add to Home Screen"): theme color
+// drives the OS status bar / task-switcher chrome around the app once
+// installed; kept in sync with the dark-theme background token since dark
+// is the default theme (see themeInitScript above).
+export const viewport: Viewport = {
+  themeColor: "#0b1220",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -58,6 +75,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <TooltipProvider delay={200}>{children}</TooltipProvider>
           <Toaster position="bottom-right" />
         </ThemeProvider>
+        <PwaRegister />
       </body>
     </html>
   );
