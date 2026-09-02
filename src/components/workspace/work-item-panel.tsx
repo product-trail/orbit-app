@@ -352,19 +352,19 @@ export function WorkItemPanel({
                   )}
                 </div>
                 {item.jiraId && !addingJira ? (
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <a
                       href={item.jiraUrl ?? "#"}
                       target="_blank"
                       rel="noreferrer"
-                      className="flex w-fit items-center gap-1.5 rounded-md bg-muted px-2 py-1 font-mono text-xs text-foreground hover:text-brand-indigo"
+                      className="flex max-w-full items-center gap-1.5 rounded-md bg-muted px-2 py-1 font-mono text-xs break-all text-foreground hover:text-brand-indigo"
                     >
                       {item.jiraId}
-                      <ExternalLink className="size-3" />
+                      <ExternalLink className="size-3 shrink-0" />
                     </a>
                     <button
                       type="button"
-                      className="text-xs font-medium text-danger hover:underline"
+                      className="shrink-0 text-xs font-medium text-danger hover:underline"
                       onClick={() => updateWorkItemJira(item.id, null, null)}
                     >
                       Remove

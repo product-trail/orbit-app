@@ -126,7 +126,7 @@ export function NewWorkItemDialog({
           )
         }
       />
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg md:max-w-2xl">
         <DialogHeader>
           <DialogTitle>New work item</DialogTitle>
           <DialogDescription>
@@ -157,7 +157,7 @@ export function NewWorkItemDialog({
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <div className="flex flex-col gap-1.5">
               <Label>Type</Label>
               <Select value={type} onValueChange={(v) => setType(v as WorkType)}>
