@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { formatDateTime, formatDueDate, timeAgo } from "@/lib/mock/date-helpers";
+import { parseJiraInput, shortJiraId } from "@/lib/utils";
 import type { Impact } from "@/lib/mock/types";
 
 const IMPACTS: Impact[] = ["High", "Medium", "Low"];
@@ -170,12 +171,19 @@ export function WorkItemPanel({
                 </Field>
 
                 <Field label="Due Date">
-                  <Input
-                    type="date"
-                    value={item.dueDate ?? ""}
-                    onChange={(e) => updateWorkItemDueDate(item.id, e.target.value || null)}
-                    className="h-8"
-                  />
+                  <div className="flex flex-col gap-1">
+                    {item.previousDueDate && (
+                      <span className="text-xs text-muted-foreground">
+                        Missed <span className="line-through">{formatDueDate(item.previousDueDate)}</span>
+                      </span>
+                    )}
+                    <Input
+                      type="date"
+                      value={item.dueDate ?? ""}
+                      onChange={(e) => updateWorkItemDueDate(item.id, e.target.value || null)}
+                      className="h-8"
+                    />
+                  </div>
                 </Field>
 
                 <Field label="Product Area">
@@ -359,7 +367,7 @@ export function WorkItemPanel({
                       rel="noreferrer"
                       className="flex max-w-full items-center gap-1.5 rounded-md bg-muted px-2 py-1 font-mono text-xs break-all text-foreground hover:text-brand-indigo"
                     >
-                      {item.jiraId}
+                      {shortJiraId(item.jiraId)}
                       <ExternalLink className="size-3 shrink-0" />
                     </a>
                     <button
@@ -382,11 +390,8 @@ export function WorkItemPanel({
                       size="sm"
                       onClick={() => {
                         if (!jiraIdDraft.trim()) return;
-                        updateWorkItemJira(
-                          item.id,
-                          jiraIdDraft.trim(),
-                          `https://jira.example.com/browse/${jiraIdDraft.trim()}`,
-                        );
+                        const { id, url } = parseJiraInput(jiraIdDraft);
+                        updateWorkItemJira(item.id, id, url);
                         setAddingJira(false);
                         setJiraIdDraft("");
                       }}

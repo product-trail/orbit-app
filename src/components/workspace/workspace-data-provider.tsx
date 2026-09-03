@@ -4,6 +4,7 @@ import { createContext, useContext, useMemo, useState, type ReactNode } from "re
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { inviteMemberAction, removeMemberAction } from "@/lib/actions/workspace-members";
+import { isOverdue } from "@/lib/mock/date-helpers";
 import {
   initialsOf,
   mapComment,
@@ -248,13 +249,20 @@ export function WorkspaceDataProvider({
       updateWorkItemDueDate: (id, dueDate) => {
         const previous = workItems.find((w) => w.id === id);
         if (!previous) return;
+        // Rescheduling a due date that's already breached keeps the old date
+        // on record (struck through in the UI) instead of silently losing
+        // it, so slippage is visible and trackable later.
+        const previousDueDate =
+          isOverdue(previous) && dueDate !== previous.dueDate ? previous.dueDate : previous.previousDueDate;
         setWorkItems((prev) =>
-          prev.map((item) => (item.id === id ? { ...item, dueDate, updatedAt: nowIso() } : item)),
+          prev.map((item) =>
+            item.id === id ? { ...item, dueDate, previousDueDate, updatedAt: nowIso() } : item,
+          ),
         );
         void (async () => {
           const { error } = await supabase
             .from("work_items")
-            .update({ due_date: dueDate })
+            .update({ due_date: dueDate, previous_due_date: previousDueDate })
             .eq("id", id);
           if (error) {
             setWorkItems((prev) => prev.map((item) => (item.id === id ? previous : item)));

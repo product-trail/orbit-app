@@ -78,6 +78,7 @@ export function mapWorkItem(w: WorkItemRow): WorkItem {
     ownerId: w.owner_id,
     createdBy: w.created_by,
     dueDate: w.due_date,
+    previousDueDate: w.previous_due_date,
     jiraId: w.jira_id,
     jiraUrl: w.jira_url,
     initiativeId: w.initiative_id,

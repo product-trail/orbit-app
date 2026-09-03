@@ -20,6 +20,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { parseJiraInput } from "@/lib/utils";
 import type { Impact, WorkType } from "@/lib/mock/types";
 
 const WORK_TYPES: WorkType[] = [
@@ -88,6 +89,7 @@ export function NewWorkItemDialog({
     if (!title.trim()) return;
     setSubmitting(true);
     try {
+      const jira = jiraId.trim() ? parseJiraInput(jiraId) : null;
       await createWorkItem({
         title: title.trim(),
         description: description.trim(),
@@ -98,8 +100,8 @@ export function NewWorkItemDialog({
         dueDate: dueDate || null,
         initiativeId: initiativeId ?? (selectedInitiativeId === NO_INITIATIVE ? undefined : selectedInitiativeId),
         expectedImpact: expectedImpact.trim() || undefined,
-        jiraId: jiraId.trim() || undefined,
-        jiraUrl: jiraId.trim() ? `https://jira.example.com/browse/${jiraId.trim()}` : undefined,
+        jiraId: jira?.id,
+        jiraUrl: jira?.url,
         productArea: productArea.trim() || undefined,
       });
       toast.success("Work item created", { description: title.trim() });

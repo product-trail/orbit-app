@@ -89,3 +89,10 @@ export const WORK_STATUSES: WorkStatus[] = [
 ];
 
 export const PRIORITIES: Priority[] = ["P0", "P1", "P2", "P3"];
+
+const PRIORITY_RANK: Record<Priority, number> = { P0: 0, P1: 1, P2: 2, P3: 3 };
+
+/** Sorts most urgent first (P0 → P3). Use as the `compareFn` for `.sort()`/`.toSorted()`. */
+export function byPriority(a: { priority: Priority }, b: { priority: Priority }) {
+  return PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority];
+}

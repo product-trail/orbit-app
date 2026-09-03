@@ -80,6 +80,9 @@ export type WorkItem = {
   ownerId: string;
   createdBy: string;
   dueDate: string | null;
+  /** The due date this item had before it was rescheduled while overdue —
+   * kept as a visible "missed" record, not cleared on reschedule. */
+  previousDueDate: string | null;
   jiraId: string | null;
   jiraUrl: string | null;
   initiativeId: string | null;

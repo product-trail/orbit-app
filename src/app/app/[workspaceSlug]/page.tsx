@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { LayoutDashboard, AlertTriangle, Clock, CheckCircle2, Flame } from "lucide-react";
 import { useWorkspaceData } from "@/components/workspace/workspace-data-provider";
-import { StatusBadge, PriorityBadge, BlockedBadge } from "@/components/workspace/badges";
+import { StatusBadge, PriorityBadge, BlockedBadge, byPriority } from "@/components/workspace/badges";
 import { EmptyState } from "@/components/workspace/empty-state";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -32,12 +32,12 @@ export default function HomePage() {
   // Blocked is independent of status — an item marked blocked counts here
   // regardless of completion. Active excludes both completed and blocked
   // items so it only reflects work that's actively movable right now.
-  const blocked = myWork.filter((w) => w.blocked);
+  const blocked = myWork.filter((w) => w.blocked).sort(byPriority);
   const active = myWork.filter((w) => w.status !== "Completed" && !w.blocked);
-  const dueToday = myWork.filter(isDueToday);
+  const dueToday = myWork.filter(isDueToday).sort(byPriority);
   const overdue = myWork.filter(isOverdue);
   const completedThisWeek = myWork.filter(isCompletedThisWeek);
-  const upcoming = myWork.filter((w) => isUpcoming(w) && !isDueToday(w));
+  const upcoming = myWork.filter((w) => isUpcoming(w) && !isDueToday(w)).sort(byPriority);
 
   const stats = [
     { label: "Active", value: active.length, icon: LayoutDashboard, tone: "text-brand-indigo" },

@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { List, Columns3, Search, ListTodo } from "lucide-react";
 import { useWorkspaceData } from "@/components/workspace/workspace-data-provider";
-import { StatusBadge, PriorityBadge, BlockedBadge, WORK_STATUSES, PRIORITIES } from "@/components/workspace/badges";
+import { StatusBadge, PriorityBadge, BlockedBadge, WORK_STATUSES, PRIORITIES, byPriority } from "@/components/workspace/badges";
 import { WorkItemPanel } from "@/components/workspace/work-item-panel";
 import { NewWorkItemDialog } from "@/components/workspace/new-work-item-dialog";
 import { EmptyState } from "@/components/workspace/empty-state";
@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDueDate, formatMonthLabel, reportMonthKey } from "@/lib/mock/date-helpers";
 import type { WorkStatus } from "@/lib/mock/types";
-import { cn } from "@/lib/utils";
+import { cn, shortJiraId } from "@/lib/utils";
 
 const ALL = "all";
 
@@ -36,15 +36,17 @@ export default function BacklogPage() {
   }, [workItems]);
 
   const filtered = useMemo(() => {
-    return workItems.filter((item) => {
-      if (search && !`${item.title} ${item.jiraId ?? ""}`.toLowerCase().includes(search.toLowerCase()))
-        return false;
-      if (ownerFilter !== ALL && item.ownerId !== ownerFilter) return false;
-      if (statusFilter !== ALL && item.status !== statusFilter) return false;
-      if (priorityFilter !== ALL && item.priority !== priorityFilter) return false;
-      if (monthFilter !== ALL && reportMonthKey(item) !== monthFilter) return false;
-      return true;
-    });
+    return workItems
+      .filter((item) => {
+        if (search && !`${item.title} ${item.jiraId ?? ""}`.toLowerCase().includes(search.toLowerCase()))
+          return false;
+        if (ownerFilter !== ALL && item.ownerId !== ownerFilter) return false;
+        if (statusFilter !== ALL && item.status !== statusFilter) return false;
+        if (priorityFilter !== ALL && item.priority !== priorityFilter) return false;
+        if (monthFilter !== ALL && reportMonthKey(item) !== monthFilter) return false;
+        return true;
+      })
+      .sort(byPriority);
   }, [workItems, search, ownerFilter, statusFilter, priorityFilter, monthFilter]);
 
   const hasAnyItems = workItems.length > 0;
@@ -239,7 +241,7 @@ export default function BacklogPage() {
                           </Select>
                         </TableCell>
                         <TableCell className="font-mono text-xs text-muted-foreground">
-                          {item.jiraId ?? "-"}
+                          {item.jiraId ? shortJiraId(item.jiraId) : "-"}
                         </TableCell>
                         <TableCell className="text-muted-foreground">
                           {formatDueDate(item.dueDate)}
@@ -341,7 +343,7 @@ function KanbanBoard({
   return (
     <div className="flex gap-4 overflow-x-auto pb-2">
       {WORK_STATUSES.map((status) => {
-        const columnItems = items.filter((i) => i.status === status);
+        const columnItems = items.filter((i) => i.status === status).sort(byPriority);
         return (
           <div
             key={status}

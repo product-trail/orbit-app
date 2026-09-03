@@ -79,6 +79,7 @@ type WorkItemsRow = {
   owner_id: string;
   created_by: string;
   due_date: string | null;
+  previous_due_date: string | null;
   jira_id: string | null;
   jira_url: string | null;
   initiative_id: string | null;
@@ -184,6 +185,7 @@ type WorkItemsInsert = InsertOf<
   | "priority"
   | "impact"
   | "due_date"
+  | "previous_due_date"
   | "jira_id"
   | "jira_url"
   | "initiative_id"
