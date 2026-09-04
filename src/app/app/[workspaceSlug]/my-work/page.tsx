@@ -17,10 +17,17 @@ import {
   isThisWeek,
   reportMonthKey,
 } from "@/lib/mock/date-helpers";
-import type { WorkItem } from "@/lib/mock/types";
+import type { WorkItem, WorkStatus } from "@/lib/mock/types";
 
-const TABS = ["All", "Today", "This Week", "Overdue", "Blocked", "Completed"] as const;
-type Tab = (typeof TABS)[number];
+const FIXED_TABS_BEFORE = ["All", "Today", "This Week", "Overdue", "Blocked"] as const;
+const FIXED_TABS_AFTER = ["Completed"] as const;
+type Tab = (typeof FIXED_TABS_BEFORE)[number] | (typeof FIXED_TABS_AFTER)[number] | WorkStatus;
+
+// "Blocked" and "Completed" already have their own dedicated tabs above (the
+// former for the independent `blocked` flag, the latter as the fixed final
+// stage) — showing them again as a status tab would just be a confusing
+// duplicate label, so they're left out of the dynamic set.
+const STATUS_TABS_EXCLUDED = new Set<WorkStatus>(["Blocked", "Completed"]);
 
 const SORT_OPTIONS = ["Priority", "Due Date", "Impact", "Status"] as const;
 type SortOption = (typeof SORT_OPTIONS)[number];
@@ -32,6 +39,8 @@ const IMPACT_ORDER: Record<string, number> = { High: 0, Medium: 1, Low: 2 };
 
 function itemsForTab(items: WorkItem[], tab: Tab): WorkItem[] {
   switch (tab) {
+    case "All":
+      return items;
     case "Today":
       return items.filter(isDueToday);
     case "This Week":
@@ -47,7 +56,9 @@ function itemsForTab(items: WorkItem[], tab: Tab): WorkItem[] {
     case "Completed":
       return items.filter((w) => w.status === "Completed");
     default:
-      return items;
+      // Any other tab value is one of the actual pipeline statuses (e.g.
+      // "In Design", "In Development") added dynamically below.
+      return items.filter((w) => w.status === tab);
   }
 }
 
@@ -67,6 +78,15 @@ export default function MyWorkPage() {
   const monthOptions = useMemo(() => {
     const keys = new Set(myItems.map(reportMonthKey));
     return [...keys].sort((a, b) => b.localeCompare(a));
+  }, [myItems]);
+
+  // Only show a tab for a pipeline status if the person actually has work
+  // sitting in it right now — no point cluttering the row with "QA /
+  // Validation" if nothing of theirs is there.
+  const tabs = useMemo<Tab[]>(() => {
+    const present = new Set(myItems.map((w) => w.status));
+    const statusTabs = WORK_STATUSES.filter((s) => present.has(s) && !STATUS_TABS_EXCLUDED.has(s));
+    return [...FIXED_TABS_BEFORE, ...statusTabs, ...FIXED_TABS_AFTER];
   }, [myItems]);
 
   const monthFiltered = useMemo(() => {
@@ -97,9 +117,44 @@ export default function MyWorkPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-6 py-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">My Work</h1>
-        <p className="text-sm text-muted-foreground">Your personal queue across the workspace.</p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">My Work</h1>
+          <p className="text-sm text-muted-foreground">Your personal queue across the workspace.</p>
+        </div>
+
+        {hasAnyItems && (
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-muted-foreground">Month</span>
+              <Select value={monthFilter} onValueChange={(v) => setMonthFilter(v ?? ALL_MONTHS)}>
+                <SelectTrigger size="sm">
+                  <SelectValue placeholder="Month">
+                    {(v: string) => (v === ALL_MONTHS ? "All time" : formatMonthLabel(v))}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL_MONTHS}>All time</SelectItem>
+                  {monthOptions.map((m) => (
+                    <SelectItem key={m} value={m}>{formatMonthLabel(m)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-muted-foreground">Sort by</span>
+              <Select value={sort} onValueChange={(v) => v && setSort(v as SortOption)}>
+                <SelectTrigger size="sm"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {SORT_OPTIONS.map((s) => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
       </div>
 
       {!hasAnyItems ? (
@@ -110,9 +165,11 @@ export default function MyWorkPage() {
         />
       ) : (
         <Tabs value={tab} onValueChange={(v) => v && setTab(v as Tab)}>
-          <div className="flex flex-wrap items-center justify-between gap-2">
+          {/* Scrolls horizontally instead of wrapping — the status tabs
+              below are dynamic per-person, so this row can get long. */}
+          <div className="overflow-x-auto pb-1">
             <TabsList>
-              {TABS.map((t) => (
+              {tabs.map((t) => (
                 <TabsTrigger key={t} value={t}>
                   {t}
                   <span className="ml-1 text-xs text-muted-foreground">
@@ -121,37 +178,6 @@ export default function MyWorkPage() {
                 </TabsTrigger>
               ))}
             </TabsList>
-
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs text-muted-foreground">Month</span>
-                <Select value={monthFilter} onValueChange={(v) => setMonthFilter(v ?? ALL_MONTHS)}>
-                  <SelectTrigger size="sm">
-                    <SelectValue placeholder="Month">
-                      {(v: string) => (v === ALL_MONTHS ? "All time" : formatMonthLabel(v))}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={ALL_MONTHS}>All time</SelectItem>
-                    {monthOptions.map((m) => (
-                      <SelectItem key={m} value={m}>{formatMonthLabel(m)}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs text-muted-foreground">Sort by</span>
-                <Select value={sort} onValueChange={(v) => v && setSort(v as SortOption)}>
-                  <SelectTrigger size="sm"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {SORT_OPTIONS.map((s) => (
-                      <SelectItem key={s} value={s}>{s}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
           </div>
 
           <TabsContent value={tab} className="mt-4">
