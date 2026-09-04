@@ -14,12 +14,11 @@ import {
   formatMonthLabel,
   isOverdue,
   isDueToday,
-  isThisWeek,
   reportMonthKey,
 } from "@/lib/mock/date-helpers";
 import type { WorkItem, WorkStatus } from "@/lib/mock/types";
 
-const FIXED_TABS_BEFORE = ["All", "Today", "This Week", "Overdue", "Blocked"] as const;
+const FIXED_TABS_BEFORE = ["All", "Today", "Overdue", "Blocked"] as const;
 const FIXED_TABS_AFTER = ["Completed"] as const;
 type Tab = (typeof FIXED_TABS_BEFORE)[number] | (typeof FIXED_TABS_AFTER)[number] | WorkStatus;
 
@@ -43,8 +42,6 @@ function itemsForTab(items: WorkItem[], tab: Tab): WorkItem[] {
       return items;
     case "Today":
       return items.filter(isDueToday);
-    case "This Week":
-      return items.filter(isThisWeek);
     case "Overdue":
       return items.filter(isOverdue);
     case "Blocked":
