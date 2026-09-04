@@ -244,7 +244,14 @@ export default function BacklogPage() {
                           {item.jiraId ? shortJiraId(item.jiraId) : "-"}
                         </TableCell>
                         <TableCell className="text-muted-foreground">
-                          {formatDueDate(item.dueDate)}
+                          <div className="flex flex-col">
+                            <span>{formatDueDate(item.dueDate)}</span>
+                            {item.previousDueDate && (
+                              <span className="text-xs text-muted-foreground/70 line-through">
+                                {formatDueDate(item.previousDueDate)}
+                              </span>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -287,7 +294,14 @@ export default function BacklogPage() {
                           </>
                         )}
                       </span>
-                      <span className="shrink-0">{formatDueDate(item.dueDate)}</span>
+                      <span className="flex shrink-0 flex-col items-end">
+                        <span>{formatDueDate(item.dueDate)}</span>
+                        {item.previousDueDate && (
+                          <span className="text-muted-foreground/70 line-through">
+                            {formatDueDate(item.previousDueDate)}
+                          </span>
+                        )}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex min-w-0 items-center gap-1.5">
