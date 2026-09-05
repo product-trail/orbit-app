@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   initialsOf,
   mapActivityLog,
+  mapBusinessPrioritizationField,
   mapComment,
   mapIdea,
   mapInitiative,
@@ -43,30 +44,44 @@ export async function getWorkspaceSnapshot(slug: string): Promise<WorkspaceSnaps
 
   const workspaceId = workspaceRow.id;
 
-  const [memberRes, workItemsRes, ideasRes, initiativesRes, roadmapRes, commentsRes, standupsRes, activityRes] =
-    await Promise.all([
-      supabase.from("workspace_members").select("*").eq("workspace_id", workspaceId),
-      supabase
-        .from("work_items")
-        .select("*")
-        .eq("workspace_id", workspaceId)
-        .order("created_at", { ascending: false }),
-      supabase.from("ideas").select("*").eq("workspace_id", workspaceId).order("created_at", { ascending: false }),
-      supabase
-        .from("initiatives")
-        .select("*")
-        .eq("workspace_id", workspaceId)
-        .order("created_at", { ascending: false }),
-      supabase.from("roadmap_items").select("*").eq("workspace_id", workspaceId),
-      supabase.from("comments").select("*").eq("workspace_id", workspaceId).order("created_at", { ascending: true }),
-      supabase.from("standups").select("*").eq("workspace_id", workspaceId).order("date", { ascending: false }),
-      supabase
-        .from("activity_logs")
-        .select("*")
-        .eq("workspace_id", workspaceId)
-        .order("created_at", { ascending: false })
-        .limit(200),
-    ]);
+  const [
+    memberRes,
+    workItemsRes,
+    ideasRes,
+    initiativesRes,
+    roadmapRes,
+    commentsRes,
+    standupsRes,
+    activityRes,
+    bizFieldsRes,
+  ] = await Promise.all([
+    supabase.from("workspace_members").select("*").eq("workspace_id", workspaceId),
+    supabase
+      .from("work_items")
+      .select("*")
+      .eq("workspace_id", workspaceId)
+      .order("created_at", { ascending: false }),
+    supabase.from("ideas").select("*").eq("workspace_id", workspaceId).order("created_at", { ascending: false }),
+    supabase
+      .from("initiatives")
+      .select("*")
+      .eq("workspace_id", workspaceId)
+      .order("created_at", { ascending: false }),
+    supabase.from("roadmap_items").select("*").eq("workspace_id", workspaceId),
+    supabase.from("comments").select("*").eq("workspace_id", workspaceId).order("created_at", { ascending: true }),
+    supabase.from("standups").select("*").eq("workspace_id", workspaceId).order("date", { ascending: false }),
+    supabase
+      .from("activity_logs")
+      .select("*")
+      .eq("workspace_id", workspaceId)
+      .order("created_at", { ascending: false })
+      .limit(200),
+    supabase
+      .from("business_prioritization_fields")
+      .select("*")
+      .eq("workspace_id", workspaceId)
+      .order("sort_order", { ascending: true }),
+  ]);
 
   // RLS returns an empty set here for anyone who isn't a member (see
   // is_workspace_member in 0002_rls_policies.sql) — a workspace always has
@@ -90,6 +105,7 @@ export async function getWorkspaceSnapshot(slug: string): Promise<WorkspaceSnaps
   const comments = (commentsRes.data ?? []).map(mapComment);
   const standups = (standupsRes.data ?? []).map(mapStandup);
   const activityLogs = (activityRes.data ?? []).map(mapActivityLog);
+  const businessPrioritizationFields = (bizFieldsRes.data ?? []).map(mapBusinessPrioritizationField);
 
   return {
     workspace,
@@ -102,6 +118,7 @@ export async function getWorkspaceSnapshot(slug: string): Promise<WorkspaceSnaps
     comments,
     standups,
     activityLogs,
+    businessPrioritizationFields,
     currentUserId: user.id,
   };
 }

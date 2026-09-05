@@ -47,12 +47,40 @@ export type Profile = {
   email?: string;
 };
 
+/** Column keys for the Business Prioritization view's built-in columns —
+ * the fixed set every workspace gets, before any custom columns are added. */
+export type BizColumnKey = "rank" | "work" | "impact" | "status" | "goLive" | "owner";
+
+/** Per-workspace, workspace-owner-editable settings. Currently just label
+ * overrides for the Business Prioritization view's built-in columns, since
+ * the defaults were written from one team's perspective (Paytm Postpaid)
+ * and other teams need their own wording without a code change. */
+export type WorkspaceSettings = {
+  businessPrioritizationLabels: Partial<Record<BizColumnKey, string>>;
+};
+
+export type CustomFieldType = "text" | "number" | "date";
+
+/** A workspace-defined extra column on the Business Prioritization view,
+ * appended after the built-in columns. Values live per work item in
+ * `WorkItem.customFieldValues`, keyed by `key`. */
+export type BusinessPrioritizationField = {
+  id: string;
+  workspaceId: string;
+  key: string;
+  label: string;
+  type: CustomFieldType;
+  sortOrder: number;
+  createdAt: string;
+};
+
 export type Workspace = {
   id: string;
   name: string;
   slug: string;
   createdBy: string;
   createdAt: string;
+  settings: WorkspaceSettings;
 };
 
 export type WorkspaceSummary = {
@@ -101,6 +129,12 @@ export type WorkItem = {
    * (e.g. "No. of Signups" in the Paytm Postpaid use case) — distinct from
    * the coarse High/Medium/Low `impact` enum. */
   expectedSignups: number | null;
+  /** Go-live date for the Business Prioritization view, shared by the tech
+   * team once known — often blank while an item is still being negotiated. */
+  goLiveDate: string | null;
+  /** Values for workspace-defined custom columns on the Business
+   * Prioritization view, keyed by `BusinessPrioritizationField.key`. */
+  customFieldValues: Record<string, string | number | null>;
   createdAt: string;
   updatedAt: string;
   completedAt: string | null;
@@ -190,4 +224,5 @@ export type WorkspaceSeed = {
   comments: Comment[];
   standups: Standup[];
   activityLogs: ActivityLog[];
+  businessPrioritizationFields: BusinessPrioritizationField[];
 };

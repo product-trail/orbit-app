@@ -8,6 +8,7 @@
 import type { Database } from "@/types/database";
 import type {
   ActivityLog,
+  BusinessPrioritizationField,
   Comment,
   Idea,
   Initiative,
@@ -17,6 +18,7 @@ import type {
   WorkItem,
   Workspace,
   WorkspaceMember,
+  WorkspaceSettings,
 } from "@/lib/mock/types";
 
 type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
@@ -29,6 +31,20 @@ type RoadmapItemRow = Database["public"]["Tables"]["roadmap_items"]["Row"];
 type CommentRow = Database["public"]["Tables"]["comments"]["Row"];
 type StandupRow = Database["public"]["Tables"]["standups"]["Row"];
 type ActivityLogRow = Database["public"]["Tables"]["activity_logs"]["Row"];
+type BusinessPrioritizationFieldRow =
+  Database["public"]["Tables"]["business_prioritization_fields"]["Row"];
+
+/** `workspaces.settings` is stored as an untyped jsonb blob — this guards
+ * against a null/malformed value (e.g. before any label has been
+ * customized) rather than trusting the shape at the type level. */
+function parseWorkspaceSettings(raw: unknown): WorkspaceSettings {
+  const obj = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+  const labels =
+    obj.businessPrioritizationLabels && typeof obj.businessPrioritizationLabels === "object"
+      ? (obj.businessPrioritizationLabels as Record<string, string>)
+      : {};
+  return { businessPrioritizationLabels: labels };
+}
 
 export function initialsOf(name: string): string {
   return (
@@ -48,6 +64,7 @@ export function mapWorkspace(w: WorkspaceRow): Workspace {
     slug: w.slug,
     createdBy: w.created_by,
     createdAt: w.created_at,
+    settings: parseWorkspaceSettings(w.settings),
   };
 }
 
@@ -88,6 +105,8 @@ export function mapWorkItem(w: WorkItemRow): WorkItem {
     expectedImpact: w.expected_impact,
     businessRank: w.business_rank,
     expectedSignups: w.expected_signups,
+    goLiveDate: w.go_live_date,
+    customFieldValues: w.custom_field_values ?? {},
     createdAt: w.created_at,
     updatedAt: w.updated_at,
     completedAt: w.completed_at,
@@ -176,5 +195,19 @@ export function mapActivityLog(a: ActivityLogRow): ActivityLog {
     entityId: a.entity_id,
     action: a.action,
     createdAt: a.created_at,
+  };
+}
+
+export function mapBusinessPrioritizationField(
+  f: BusinessPrioritizationFieldRow,
+): BusinessPrioritizationField {
+  return {
+    id: f.id,
+    workspaceId: f.workspace_id,
+    key: f.key,
+    label: f.label,
+    type: f.type,
+    sortOrder: f.sort_order,
+    createdAt: f.created_at,
   };
 }

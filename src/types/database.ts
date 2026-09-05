@@ -42,6 +42,8 @@ export type WorkspaceRole = "owner" | "member";
 
 export type ActivityEntityType = "work_item" | "idea" | "initiative" | "standup";
 
+export type BusinessPrioritizationFieldType = "text" | "number" | "date";
+
 type ProfilesRow = {
   id: string;
   name: string;
@@ -57,6 +59,7 @@ type WorkspacesRow = {
   created_by: string;
   created_at: string;
   updated_at: string;
+  settings: Record<string, unknown>;
 };
 
 type WorkspaceMembersRow = {
@@ -89,6 +92,8 @@ type WorkItemsRow = {
   expected_impact: string | null;
   business_rank: number | null;
   expected_signups: number | null;
+  go_live_date: string | null;
+  custom_field_values: Record<string, string | number | null>;
   created_at: string;
   updated_at: string;
   completed_at: string | null;
@@ -168,12 +173,22 @@ type ActivityLogsRow = {
   created_at: string;
 };
 
+type BusinessPrioritizationFieldsRow = {
+  id: string;
+  workspace_id: string;
+  key: string;
+  label: string;
+  type: BusinessPrioritizationFieldType;
+  sort_order: number;
+  created_at: string;
+};
+
 /** Row fields with a DB default become optional on insert. */
 type InsertOf<Row, Defaulted extends keyof Row> = Omit<Row, Defaulted> &
   Partial<Pick<Row, Defaulted>>;
 
 type ProfilesInsert = InsertOf<ProfilesRow, "avatar_url" | "created_at" | "updated_at">;
-type WorkspacesInsert = InsertOf<WorkspacesRow, "id" | "created_at" | "updated_at">;
+type WorkspacesInsert = InsertOf<WorkspacesRow, "id" | "created_at" | "updated_at" | "settings">;
 type WorkspaceMembersInsert = InsertOf<
   WorkspaceMembersRow,
   "id" | "role" | "created_at"
@@ -197,6 +212,8 @@ type WorkItemsInsert = InsertOf<
   | "expected_impact"
   | "business_rank"
   | "expected_signups"
+  | "go_live_date"
+  | "custom_field_values"
   | "created_at"
   | "updated_at"
   | "completed_at"
@@ -235,6 +252,10 @@ type StandupsInsert = InsertOf<
   "id" | "yesterday" | "today" | "blocked" | "created_at"
 >;
 type ActivityLogsInsert = InsertOf<ActivityLogsRow, "id" | "metadata" | "created_at">;
+type BusinessPrioritizationFieldsInsert = InsertOf<
+  BusinessPrioritizationFieldsRow,
+  "id" | "created_at"
+>;
 
 type UpdateOf<Insert> = Partial<Insert>;
 
@@ -300,6 +321,11 @@ export type Database = {
         Insert: ActivityLogsInsert;
         Update: UpdateOf<ActivityLogsInsert>;
       } & NoRelationships;
+      business_prioritization_fields: {
+        Row: BusinessPrioritizationFieldsRow;
+        Insert: BusinessPrioritizationFieldsInsert;
+        Update: UpdateOf<BusinessPrioritizationFieldsInsert>;
+      } & NoRelationships;
     };
     Views: Record<string, never>;
     Functions: {
@@ -330,6 +356,7 @@ export type Database = {
       initiative_status: InitiativeStatus;
       workspace_role: WorkspaceRole;
       activity_entity_type: ActivityEntityType;
+      business_prioritization_field_type: BusinessPrioritizationFieldType;
     };
     CompositeTypes: Record<string, never>;
   };

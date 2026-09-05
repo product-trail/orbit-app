@@ -7,6 +7,7 @@ import { inviteMemberAction, removeMemberAction } from "@/lib/actions/workspace-
 import { isOverdue } from "@/lib/mock/date-helpers";
 import {
   initialsOf,
+  mapBusinessPrioritizationField,
   mapComment,
   mapIdea,
   mapInitiative,
@@ -16,7 +17,10 @@ import {
 import type { WorkspaceSnapshot } from "@/lib/data/workspace-snapshot";
 import type {
   ActivityLog,
+  BizColumnKey,
+  BusinessPrioritizationField,
   Comment,
+  CustomFieldType,
   Idea,
   IdeaStatus,
   Impact,
@@ -70,6 +74,7 @@ type WorkspaceDataValue = {
   comments: Comment[];
   standups: Standup[];
   activityLogs: ActivityLog[];
+  businessPrioritizationFields: BusinessPrioritizationField[];
   getProfile: (userId: string) => Profile;
   updateWorkItemStatus: (id: string, status: WorkStatus) => void;
   updateWorkItemPriority: (id: string, priority: Priority) => void;
@@ -83,9 +88,17 @@ type WorkspaceDataValue = {
   updateWorkItemInitiative: (id: string, initiativeId: string | null) => void;
   updateWorkItemExpectedImpact: (id: string, expectedImpact: string | null) => void;
   updateWorkItemExpectedSignups: (id: string, expectedSignups: number | null) => void;
+  updateWorkItemGoLiveDate: (id: string, goLiveDate: string | null) => void;
+  updateWorkItemCustomField: (id: string, fieldKey: string, value: string | number | null) => void;
   moveToBusinessPrioritization: (id: string) => void;
   removeFromBusinessPrioritization: (id: string) => void;
   reorderBusinessPrioritization: (id: string, businessRank: number) => void;
+  addBusinessPrioritizationField: (input: {
+    label: string;
+    type: CustomFieldType;
+  }) => Promise<BusinessPrioritizationField>;
+  removeBusinessPrioritizationField: (id: string) => Promise<void>;
+  updateWorkspaceColumnLabel: (columnKey: BizColumnKey, label: string) => void;
   createWorkItem: (input: NewWorkItemInput) => Promise<WorkItem>;
   deleteWorkItem: (id: string) => Promise<void>;
   addComment: (workItemId: string, content: string) => Promise<void>;
@@ -112,6 +125,7 @@ export function WorkspaceDataProvider({
   const supabase = useMemo(() => createClient(), []);
   const currentUserId = snapshot.currentUserId;
 
+  const [workspace, setWorkspace] = useState<Workspace>(snapshot.workspace);
   const [members, setMembers] = useState<WorkspaceMember[]>(snapshot.members);
   const [profiles, setProfiles] = useState<Profile[]>(snapshot.profiles);
   const [workItems, setWorkItems] = useState<WorkItem[]>(snapshot.workItems);
@@ -121,6 +135,9 @@ export function WorkspaceDataProvider({
   const [comments, setComments] = useState<Comment[]>(snapshot.comments);
   const [standups, setStandups] = useState<Standup[]>(snapshot.standups);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>(snapshot.activityLogs);
+  const [businessPrioritizationFields, setBusinessPrioritizationFields] = useState<
+    BusinessPrioritizationField[]
+  >(snapshot.businessPrioritizationFields);
 
   const currentRole: Role = members.find((m) => m.userId === currentUserId)?.role ?? "member";
 
@@ -177,7 +194,7 @@ export function WorkspaceDataProvider({
 
   const value = useMemo<WorkspaceDataValue>(
     () => ({
-      workspace: snapshot.workspace,
+      workspace,
       members,
       profiles,
       currentUserId,
@@ -189,6 +206,7 @@ export function WorkspaceDataProvider({
       comments,
       standups,
       activityLogs,
+      businessPrioritizationFields,
       getProfile,
 
       updateWorkItemStatus: (id, status) => {
@@ -463,6 +481,47 @@ export function WorkspaceDataProvider({
         })();
       },
 
+      updateWorkItemGoLiveDate: (id, goLiveDate) => {
+        const previous = workItems.find((w) => w.id === id);
+        if (!previous) return;
+        setWorkItems((prev) =>
+          prev.map((item) =>
+            item.id === id ? { ...item, goLiveDate, updatedAt: nowIso() } : item,
+          ),
+        );
+        void (async () => {
+          const { error } = await supabase
+            .from("work_items")
+            .update({ go_live_date: goLiveDate })
+            .eq("id", id);
+          if (error) {
+            setWorkItems((prev) => prev.map((item) => (item.id === id ? previous : item)));
+            toast.error("Couldn't update go-live date", { description: error.message });
+          }
+        })();
+      },
+
+      updateWorkItemCustomField: (id, fieldKey, fieldValue) => {
+        const previous = workItems.find((w) => w.id === id);
+        if (!previous) return;
+        const customFieldValues = { ...previous.customFieldValues, [fieldKey]: fieldValue };
+        setWorkItems((prev) =>
+          prev.map((item) =>
+            item.id === id ? { ...item, customFieldValues, updatedAt: nowIso() } : item,
+          ),
+        );
+        void (async () => {
+          const { error } = await supabase
+            .from("work_items")
+            .update({ custom_field_values: customFieldValues })
+            .eq("id", id);
+          if (error) {
+            setWorkItems((prev) => prev.map((item) => (item.id === id ? previous : item)));
+            toast.error("Couldn't update field", { description: error.message });
+          }
+        })();
+      },
+
       // Placed at the bottom of the current queue — one full "gap" (1000)
       // past the highest existing rank, so later drags always have plenty of
       // room to slot in a midpoint without hitting float precision limits.
@@ -538,6 +597,61 @@ export function WorkspaceDataProvider({
           if (error) {
             setWorkItems((prev) => prev.map((item) => (item.id === id ? previous : item)));
             toast.error("Couldn't save new order", { description: error.message });
+          }
+        })();
+      },
+
+      addBusinessPrioritizationField: async ({ label, type }) => {
+        const key = `field_${crypto.randomUUID().slice(0, 8)}`;
+        const sortOrder = businessPrioritizationFields.length;
+        const { data, error } = await supabase
+          .from("business_prioritization_fields")
+          .insert({
+            workspace_id: snapshot.workspace.id,
+            key,
+            label,
+            type,
+            sort_order: sortOrder,
+          })
+          .select()
+          .single();
+        if (error || !data) {
+          throw new Error(error?.message ?? "Couldn't add column.");
+        }
+        const field = mapBusinessPrioritizationField(data);
+        setBusinessPrioritizationFields((prev) => [...prev, field]);
+        return field;
+      },
+
+      removeBusinessPrioritizationField: async (id) => {
+        const { error } = await supabase.from("business_prioritization_fields").delete().eq("id", id);
+        if (error) {
+          throw new Error(error.message ?? "Couldn't remove column.");
+        }
+        setBusinessPrioritizationFields((prev) => prev.filter((f) => f.id !== id));
+      },
+
+      // Owner-editable per-workspace overrides for the built-in Business
+      // Prioritization column labels — the defaults were written from one
+      // team's perspective, so other teams can relabel without a code change.
+      updateWorkspaceColumnLabel: (columnKey, label) => {
+        const previous = workspace;
+        const nextSettings = {
+          ...workspace.settings,
+          businessPrioritizationLabels: {
+            ...workspace.settings.businessPrioritizationLabels,
+            [columnKey]: label,
+          },
+        };
+        setWorkspace((prev) => ({ ...prev, settings: nextSettings }));
+        void (async () => {
+          const { error } = await supabase
+            .from("workspaces")
+            .update({ settings: nextSettings })
+            .eq("id", workspace.id);
+          if (error) {
+            setWorkspace(previous);
+            toast.error("Couldn't save column label", { description: error.message });
           }
         })();
       },
@@ -765,6 +879,7 @@ export function WorkspaceDataProvider({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       snapshot,
+      workspace,
       currentUserId,
       currentRole,
       members,
@@ -776,6 +891,7 @@ export function WorkspaceDataProvider({
       comments,
       standups,
       activityLogs,
+      businessPrioritizationFields,
       supabase,
     ],
   );
