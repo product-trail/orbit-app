@@ -92,6 +92,15 @@ export type WorkItem = {
   /** Narrative description of the expected business outcome, e.g. "increase
    * landing page conversion by 2%" — distinct from the coarse `impact` enum. */
   expectedImpact: string | null;
+  /** Fractional stack-rank order within the Business Prioritization queue.
+   * `null` means the item hasn't been moved there. Reordering sets this to
+   * the midpoint of its new neighbors' ranks, so drags never require
+   * renumbering the whole list. */
+  businessRank: number | null;
+  /** Absolute-value business impact for the Business Prioritization view
+   * (e.g. "No. of Signups" in the Paytm Postpaid use case) — distinct from
+   * the coarse High/Medium/Low `impact` enum. */
+  expectedSignups: number | null;
   createdAt: string;
   updatedAt: string;
   completedAt: string | null;

@@ -87,6 +87,8 @@ type WorkItemsRow = {
   blocked: boolean;
   blocker_description: string | null;
   expected_impact: string | null;
+  business_rank: number | null;
+  expected_signups: number | null;
   created_at: string;
   updated_at: string;
   completed_at: string | null;
@@ -193,6 +195,8 @@ type WorkItemsInsert = InsertOf<
   | "blocked"
   | "blocker_description"
   | "expected_impact"
+  | "business_rank"
+  | "expected_signups"
   | "created_at"
   | "updated_at"
   | "completed_at"

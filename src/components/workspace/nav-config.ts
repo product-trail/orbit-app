@@ -7,6 +7,7 @@ import {
   Users,
   MessagesSquare,
   Settings,
+  ArrowUpDown,
 } from "lucide-react";
 
 export type NavItem = {
@@ -26,6 +27,12 @@ export const NAV_ITEMS: NavItem[] = [
     mobileLabel: "Backlog",
     href: (slug) => `/app/${slug}/work`,
     icon: List,
+  },
+  {
+    label: "Business Prioritization",
+    mobileLabel: "Biz Priority",
+    href: (slug) => `/app/${slug}/business-prioritization`,
+    icon: ArrowUpDown,
   },
   { label: "Ideas", href: (slug) => `/app/${slug}/ideas`, icon: Lightbulb },
   { label: "Roadmap", href: (slug) => `/app/${slug}/roadmap`, icon: Milestone },

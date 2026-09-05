@@ -58,6 +58,9 @@ export function WorkItemPanel({
     updateWorkItemProductArea,
     updateWorkItemInitiative,
     updateWorkItemExpectedImpact,
+    updateWorkItemExpectedSignups,
+    moveToBusinessPrioritization,
+    removeFromBusinessPrioritization,
     toggleWorkItemBlocked,
     addComment,
     deleteWorkItem,
@@ -69,6 +72,8 @@ export function WorkItemPanel({
   const [descriptionDraft, setDescriptionDraft] = useState("");
   const [editingExpectedImpact, setEditingExpectedImpact] = useState(false);
   const [expectedImpactDraft, setExpectedImpactDraft] = useState("");
+  const [editingExpectedSignups, setEditingExpectedSignups] = useState(false);
+  const [expectedSignupsDraft, setExpectedSignupsDraft] = useState("");
   const [addingJira, setAddingJira] = useState(false);
   const [jiraIdDraft, setJiraIdDraft] = useState("");
   const [editingProductArea, setEditingProductArea] = useState(false);
@@ -339,6 +344,94 @@ export function WorkItemPanel({
                 ) : (
                   <p className="text-sm text-foreground">
                     {item.expectedImpact || "No expected impact set."}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-medium text-muted-foreground">Expected Signups</p>
+                  {!editingExpectedSignups && (
+                    <button
+                      type="button"
+                      className="text-xs font-medium text-brand-indigo hover:underline"
+                      onClick={() => {
+                        setExpectedSignupsDraft(
+                          item.expectedSignups != null ? String(item.expectedSignups) : "",
+                        );
+                        setEditingExpectedSignups(true);
+                      }}
+                    >
+                      Edit
+                    </button>
+                  )}
+                </div>
+                {editingExpectedSignups ? (
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      min="0"
+                      placeholder="e.g. 12000"
+                      value={expectedSignupsDraft}
+                      onChange={(e) => setExpectedSignupsDraft(e.target.value)}
+                      className="h-8 w-32"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          const n = expectedSignupsDraft.trim() ? Number(expectedSignupsDraft) : null;
+                          updateWorkItemExpectedSignups(item.id, n != null && !isNaN(n) ? n : null);
+                          setEditingExpectedSignups(false);
+                        } else if (e.key === "Escape") {
+                          setEditingExpectedSignups(false);
+                        }
+                      }}
+                    />
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        const n = expectedSignupsDraft.trim() ? Number(expectedSignupsDraft) : null;
+                        updateWorkItemExpectedSignups(item.id, n != null && !isNaN(n) ? n : null);
+                        setEditingExpectedSignups(false);
+                      }}
+                    >
+                      Save
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => setEditingExpectedSignups(false)}>
+                      Cancel
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-sm text-foreground">
+                    {item.expectedSignups != null ? `${item.expectedSignups.toLocaleString()} signups` : "Not set"}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <p className="text-xs font-medium text-muted-foreground">Business Prioritization</p>
+                {item.businessRank != null ? (
+                  <div className="flex items-center justify-between gap-2 rounded-md bg-teal/10 px-3 py-2">
+                    <span className="text-sm text-teal">In the Business Prioritization queue</span>
+                    <button
+                      type="button"
+                      className="shrink-0 text-xs font-medium text-danger hover:underline"
+                      onClick={() => removeFromBusinessPrioritization(item.id)}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : item.status === "PRD Complete" ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-fit"
+                    onClick={() => moveToBusinessPrioritization(item.id)}
+                  >
+                    Add to Business Prioritization
+                  </Button>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Available once this item&apos;s status is &ldquo;PRD Complete&rdquo;.
                   </p>
                 )}
               </div>

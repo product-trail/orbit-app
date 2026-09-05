@@ -82,6 +82,10 @@ type WorkspaceDataValue = {
   toggleWorkItemBlocked: (id: string, blocked: boolean, description?: string) => void;
   updateWorkItemInitiative: (id: string, initiativeId: string | null) => void;
   updateWorkItemExpectedImpact: (id: string, expectedImpact: string | null) => void;
+  updateWorkItemExpectedSignups: (id: string, expectedSignups: number | null) => void;
+  moveToBusinessPrioritization: (id: string) => void;
+  removeFromBusinessPrioritization: (id: string) => void;
+  reorderBusinessPrioritization: (id: string, businessRank: number) => void;
   createWorkItem: (input: NewWorkItemInput) => Promise<WorkItem>;
   deleteWorkItem: (id: string) => Promise<void>;
   addComment: (workItemId: string, content: string) => Promise<void>;
@@ -435,6 +439,105 @@ export function WorkspaceDataProvider({
           if (error) {
             setWorkItems((prev) => prev.map((item) => (item.id === id ? previous : item)));
             toast.error("Couldn't update expected impact", { description: error.message });
+          }
+        })();
+      },
+
+      updateWorkItemExpectedSignups: (id, expectedSignups) => {
+        const previous = workItems.find((w) => w.id === id);
+        if (!previous) return;
+        setWorkItems((prev) =>
+          prev.map((item) =>
+            item.id === id ? { ...item, expectedSignups, updatedAt: nowIso() } : item,
+          ),
+        );
+        void (async () => {
+          const { error } = await supabase
+            .from("work_items")
+            .update({ expected_signups: expectedSignups })
+            .eq("id", id);
+          if (error) {
+            setWorkItems((prev) => prev.map((item) => (item.id === id ? previous : item)));
+            toast.error("Couldn't update expected signups", { description: error.message });
+          }
+        })();
+      },
+
+      // Placed at the bottom of the current queue — one full "gap" (1000)
+      // past the highest existing rank, so later drags always have plenty of
+      // room to slot in a midpoint without hitting float precision limits.
+      moveToBusinessPrioritization: (id) => {
+        const previous = workItems.find((w) => w.id === id);
+        if (!previous) return;
+        const maxRank = workItems.reduce(
+          (max, w) => (w.businessRank != null && w.businessRank > max ? w.businessRank : max),
+          0,
+        );
+        const businessRank = maxRank + 1000;
+        setWorkItems((prev) =>
+          prev.map((item) =>
+            item.id === id ? { ...item, businessRank, updatedAt: nowIso() } : item,
+          ),
+        );
+        logActivity({
+          entityType: "work_item",
+          entityId: id,
+          action: "added to Business Prioritization",
+        });
+        void (async () => {
+          const { error } = await supabase
+            .from("work_items")
+            .update({ business_rank: businessRank })
+            .eq("id", id);
+          if (error) {
+            setWorkItems((prev) => prev.map((item) => (item.id === id ? previous : item)));
+            toast.error("Couldn't move to Business Prioritization", { description: error.message });
+          }
+        })();
+      },
+
+      removeFromBusinessPrioritization: (id) => {
+        const previous = workItems.find((w) => w.id === id);
+        if (!previous) return;
+        setWorkItems((prev) =>
+          prev.map((item) =>
+            item.id === id ? { ...item, businessRank: null, updatedAt: nowIso() } : item,
+          ),
+        );
+        logActivity({
+          entityType: "work_item",
+          entityId: id,
+          action: "removed from Business Prioritization",
+        });
+        void (async () => {
+          const { error } = await supabase
+            .from("work_items")
+            .update({ business_rank: null })
+            .eq("id", id);
+          if (error) {
+            setWorkItems((prev) => prev.map((item) => (item.id === id ? previous : item)));
+            toast.error("Couldn't remove from Business Prioritization", { description: error.message });
+          }
+        })();
+      },
+
+      // Fire-and-forget, no activity log entry — reordering happens far more
+      // often than every other field edit here, and logging each drag would
+      // drown out actually meaningful activity history.
+      reorderBusinessPrioritization: (id, businessRank) => {
+        const previous = workItems.find((w) => w.id === id);
+        if (!previous) return;
+        setWorkItems((prev) =>
+          prev.map((item) => (item.id === id ? { ...item, businessRank } : item)),
+        );
+        void (async () => {
+          const { error } = await supabase
+            .from("work_items")
+            .update({ business_rank: businessRank })
+            .eq("id", id);
+          if (error) {
+            setWorkItems((prev) => prev.map((item) => (item.id === id ? previous : item)));
+            toast.error("Couldn't save new order", { description: error.message });
           }
         })();
       },
