@@ -29,8 +29,8 @@ export const NAV_ITEMS: NavItem[] = [
     icon: List,
   },
   {
-    label: "Business Prioritization",
-    mobileLabel: "Biz Priority",
+    label: "Task Prioritization",
+    mobileLabel: "Task Priority",
     href: (slug) => `/app/${slug}/business-prioritization`,
     icon: ArrowUpDown,
   },

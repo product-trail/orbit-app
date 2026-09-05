@@ -541,7 +541,7 @@ export function WorkspaceDataProvider({
         logActivity({
           entityType: "work_item",
           entityId: id,
-          action: "added to Business Prioritization",
+          action: "added to Task Prioritization",
         });
         void (async () => {
           const { error } = await supabase
@@ -550,7 +550,7 @@ export function WorkspaceDataProvider({
             .eq("id", id);
           if (error) {
             setWorkItems((prev) => prev.map((item) => (item.id === id ? previous : item)));
-            toast.error("Couldn't move to Business Prioritization", { description: error.message });
+            toast.error("Couldn't move to Task Prioritization", { description: error.message });
           }
         })();
       },
@@ -566,7 +566,7 @@ export function WorkspaceDataProvider({
         logActivity({
           entityType: "work_item",
           entityId: id,
-          action: "removed from Business Prioritization",
+          action: "removed from Task Prioritization",
         });
         void (async () => {
           const { error } = await supabase
@@ -575,7 +575,7 @@ export function WorkspaceDataProvider({
             .eq("id", id);
           if (error) {
             setWorkItems((prev) => prev.map((item) => (item.id === id ? previous : item)));
-            toast.error("Couldn't remove from Business Prioritization", { description: error.message });
+            toast.error("Couldn't remove from Task Prioritization", { description: error.message });
           }
         })();
       },

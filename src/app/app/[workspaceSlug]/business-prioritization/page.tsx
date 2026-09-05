@@ -157,7 +157,7 @@ export default function BusinessPrioritizationPage() {
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-8">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Business Prioritization</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Task Prioritization</h1>
         <p className="text-sm text-muted-foreground">
           Stack-ranked with the business team by impact. Drag rows to reorder.
         </p>

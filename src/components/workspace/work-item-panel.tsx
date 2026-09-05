@@ -408,10 +408,10 @@ export function WorkItemPanel({
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <p className="text-xs font-medium text-muted-foreground">Business Prioritization</p>
+                <p className="text-xs font-medium text-muted-foreground">Task Prioritization</p>
                 {item.businessRank != null ? (
                   <div className="flex items-center justify-between gap-2 rounded-md bg-teal/10 px-3 py-2">
-                    <span className="text-sm text-teal">In the Business Prioritization queue</span>
+                    <span className="text-sm text-teal">In the Task Prioritization queue</span>
                     <button
                       type="button"
                       className="shrink-0 text-xs font-medium text-danger hover:underline"
@@ -427,7 +427,7 @@ export function WorkItemPanel({
                     className="w-fit"
                     onClick={() => moveToBusinessPrioritization(item.id)}
                   >
-                    Add to Business Prioritization
+                    Add to Task Prioritization
                   </Button>
                 ) : (
                   <p className="text-xs text-muted-foreground">

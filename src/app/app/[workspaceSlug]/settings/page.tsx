@@ -99,9 +99,9 @@ export default function SettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Business Prioritization Columns</CardTitle>
+          <CardTitle>Task Prioritization Columns</CardTitle>
           <CardDescription>
-            Relabel the built-in columns or add your own for this workspace&apos;s Business Prioritization
+            Relabel the built-in columns or add your own for this workspace&apos;s Task Prioritization
             view. These defaults were written for one team&apos;s use case, so other teams can adjust them
             here.
             {!isOwner && " Only owners can make changes."}
