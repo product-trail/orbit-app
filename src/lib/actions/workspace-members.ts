@@ -47,8 +47,16 @@ export async function inviteMemberAction(
   let targetUserId: string | null = null;
   let mode: "invited" | "added_existing" = "invited";
 
+  // Server actions have no `window.location` to derive the origin from (unlike
+  // signup/login's client-side calls), so the redirect target must be resolved
+  // from an env var with a hardcoded production fallback. Without this, Supabase
+  // falls back to the project's dashboard "Site URL" (localhost by default),
+  // which breaks the invite link for every invitee.
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://app.myorbits.in";
+
   const { data: inviteData, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, {
     data: { name },
+    redirectTo: `${siteUrl}/auth/callback?next=/app`,
   });
 
   if (inviteData?.user) {
