@@ -10,6 +10,7 @@ import { OrbitLogo } from "@/components/brand/orbit-logo";
 import { GoogleIcon } from "@/components/auth/google-icon";
 import { AuthLoadingOverlay } from "@/components/auth/auth-loading-overlay";
 import { createClient } from "@/lib/supabase/client";
+import { signUpAction } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -60,34 +61,27 @@ export default function SignupPage() {
     setSubmitting(true);
     setPendingAction("password");
 
-    const supabase = createClient();
-    const { data, error } = await supabase.auth.signUp({
-      email: email.trim(),
-      password,
-      options: {
-        data: { name: name.trim() },
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/app`,
-      },
-    });
-
-    if (error) {
+    const result = await signUpAction({ name: name.trim(), email: email.trim(), password });
+    if (!result.ok) {
       setSubmitting(false);
       setPendingAction(null);
-      toast.error("Couldn't create account", { description: error.message });
+      toast.error("Couldn't create account", { description: result.error });
       return;
     }
 
-    // If email confirmations are enabled in the Supabase project, signUp
-    // returns a user but no session — the account exists but isn't usable
-    // until they click the confirmation link (which lands on /auth/callback
-    // and then /app). If confirmations are disabled, a session comes back
-    // immediately and we can route straight into onboarding.
-    if (!data.session) {
-      toast.success("Check your email", {
-        description: `We've sent a confirmation link to ${email.trim()}.`,
-      });
+    // The account is already confirmed server-side (see signUpAction) — sign
+    // in immediately with the credentials they just set, no email step.
+    const supabase = createClient();
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+    if (signInError) {
       setSubmitting(false);
       setPendingAction(null);
+      toast.error("Account created, but couldn't sign you in", {
+        description: signInError.message,
+      });
       router.push("/login");
       return;
     }

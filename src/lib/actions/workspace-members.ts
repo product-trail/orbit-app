@@ -1,5 +1,6 @@
 "use server";
 
+import { randomBytes } from "crypto";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -15,8 +16,33 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * the same rule at the DB layer.
  */
 
+// Avoids visually ambiguous characters (0/O, 1/l/I) since this is read off a
+// screen and retyped or shared verbatim, not copy-pasted from a password manager.
+const PASSWORD_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+
+function generatePassword(length = 12) {
+  const bytes = randomBytes(length);
+  let out = "";
+  for (let i = 0; i < length; i++) {
+    out += PASSWORD_CHARS[bytes[i] % PASSWORD_CHARS.length];
+  }
+  return out;
+}
+
 export type InviteMemberResult =
-  | { ok: true; memberId: string; userId: string; name: string; role: "owner" | "member"; mode: "invited" | "added_existing" }
+  | {
+      ok: true;
+      memberId: string;
+      userId: string;
+      name: string;
+      email: string;
+      role: "owner" | "member";
+      mode: "invited" | "added_existing";
+      /** Only present when `mode` is "invited" (a brand-new account was just
+       * created) — the owner shares this with the invitee directly since no
+       * invite email is sent anymore. */
+      password?: string;
+    }
   | { ok: false; error: string };
 
 export async function inviteMemberAction(
@@ -46,29 +72,32 @@ export async function inviteMemberAction(
   const admin = createAdminClient();
   let targetUserId: string | null = null;
   let mode: "invited" | "added_existing" = "invited";
+  let generatedPassword: string | undefined;
 
-  // Server actions have no `window.location` to derive the origin from (unlike
-  // signup/login's client-side calls), so the redirect target must be resolved
-  // from an env var with a hardcoded production fallback. Without this, Supabase
-  // falls back to the project's dashboard "Site URL" (localhost by default),
-  // which breaks the invite link for every invitee.
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://app.myorbits.in";
-
-  const { data: inviteData, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, {
-    data: { name },
-    redirectTo: `${siteUrl}/auth/callback?next=/app`,
+  // No invite email is sent anymore (that flow depended on Supabase's
+  // confirmation-email redirect, which needs dashboard config we don't
+  // control from here, and kept breaking for invitees). Instead we create
+  // the account outright — already confirmed, with a system-generated
+  // password — and hand the credentials back to the owner to share directly.
+  const password = generatePassword();
+  const { data: createData, error: createError } = await admin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { name },
   });
 
-  if (inviteData?.user) {
-    targetUserId = inviteData.user.id;
+  if (createData?.user) {
+    targetUserId = createData.user.id;
     mode = "invited";
+    generatedPassword = password;
   } else {
     const alreadyExists =
-      inviteError &&
-      (/already.*(registered|exists)/i.test(inviteError.message) ||
-        inviteError.code === "email_exists");
+      createError &&
+      (/already.*(registered|exists)/i.test(createError.message) ||
+        createError.code === "email_exists");
     if (!alreadyExists) {
-      return { ok: false, error: inviteError?.message ?? "Couldn't send invite." };
+      return { ok: false, error: createError?.message ?? "Couldn't create account." };
     }
 
     // No admin "get user by email" endpoint exists — page through listUsers
@@ -111,7 +140,16 @@ export async function inviteMemberAction(
     return { ok: false, error: memberError?.message ?? "Couldn't add member." };
   }
 
-  return { ok: true, memberId: memberRow.id, userId: targetUserId, name, role: input.role, mode };
+  return {
+    ok: true,
+    memberId: memberRow.id,
+    userId: targetUserId,
+    name,
+    email,
+    role: input.role,
+    mode,
+    password: generatedPassword,
+  };
 }
 
 export type RemoveMemberResult = { ok: true } | { ok: false; error: string };

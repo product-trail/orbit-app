@@ -61,6 +61,14 @@ type InviteMemberInput = {
   role: Role;
 };
 
+type InviteMemberOutcome = {
+  email: string;
+  mode: "invited" | "added_existing";
+  /** Only set when `mode` is "invited" — a system-generated password for a
+   * brand-new account, for the owner to share with the invitee directly. */
+  password?: string;
+};
+
 type WorkspaceDataValue = {
   workspace: Workspace;
   members: WorkspaceMember[];
@@ -106,7 +114,7 @@ type WorkspaceDataValue = {
   updateIdeaStatus: (id: string, status: IdeaStatus) => void;
   convertIdeaToInitiative: (ideaId: string, input: NewInitiativeInput) => Promise<Initiative>;
   submitStandup: (input: StandupInput) => Promise<void>;
-  inviteMember: (input: InviteMemberInput) => Promise<void>;
+  inviteMember: (input: InviteMemberInput) => Promise<InviteMemberOutcome>;
   removeMember: (userId: string) => Promise<void>;
 };
 
@@ -864,6 +872,7 @@ export function WorkspaceDataProvider({
           ...prev,
           { id: result.memberId, workspaceId: snapshot.workspace.id, userId: result.userId, role: result.role },
         ]);
+        return { email: result.email, mode: result.mode, password: result.password };
       },
 
       removeMember: async (userId) => {
