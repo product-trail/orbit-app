@@ -8,27 +8,30 @@ import { EmptyState } from "@/components/workspace/empty-state";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { isCompletedThisWeek, isOverdue } from "@/lib/mock/date-helpers";
 import { cn } from "@/lib/utils";
 
 export default function TeamPage() {
-  const { workItems, members, getProfile } = useWorkspaceData();
+  const { members, getProfile, teamWorkload } = useWorkspaceData();
 
+  // Counts come from the server (get_team_workload, run with elevated
+  // privileges) rather than being derived from `workItems` here - a member's
+  // own copy of `workItems` is now scoped to their own items (see
+  // 0009_work_items_owner_scoped_select.sql), so computing this client-side
+  // would silently undercount everyone else's workload.
   const rows = useMemo(
     () =>
       members.map((m) => {
-        const mine = workItems.filter((w) => w.ownerId === m.userId);
-        const active = mine.filter((w) => w.status !== "Completed");
+        const w = teamWorkload.find((t) => t.userId === m.userId);
         return {
           member: m,
-          active: active.length,
-          highPriority: active.filter((w) => w.priority === "P0" || w.priority === "P1").length,
-          overdue: mine.filter(isOverdue).length,
-          blocked: mine.filter((w) => w.blocked).length,
-          completedThisWeek: mine.filter(isCompletedThisWeek).length,
+          active: w?.active ?? 0,
+          highPriority: w?.highPriority ?? 0,
+          overdue: w?.overdue ?? 0,
+          blocked: w?.blocked ?? 0,
+          completedThisWeek: w?.completedThisWeek ?? 0,
         };
       }),
-    [members, workItems],
+    [members, teamWorkload],
   );
 
   return (

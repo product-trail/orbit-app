@@ -346,6 +346,17 @@ export type Database = {
         };
         Returns: InitiativesRow;
       };
+      get_team_workload: {
+        Args: { p_workspace_id: string };
+        Returns: {
+          user_id: string;
+          active: number;
+          high_priority: number;
+          overdue: number;
+          blocked: number;
+          completed_this_week: number;
+        }[];
+      };
     };
     Enums: {
       work_type: WorkType;

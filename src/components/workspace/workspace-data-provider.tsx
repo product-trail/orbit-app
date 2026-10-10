@@ -30,6 +30,7 @@ import type {
   RoadmapItem,
   Role,
   Standup,
+  TeamWorkloadEntry,
   WorkItem,
   WorkStatus,
   Workspace,
@@ -83,6 +84,7 @@ type WorkspaceDataValue = {
   standups: Standup[];
   activityLogs: ActivityLog[];
   businessPrioritizationFields: BusinessPrioritizationField[];
+  teamWorkload: TeamWorkloadEntry[];
   getProfile: (userId: string) => Profile;
   updateWorkItemStatus: (id: string, status: WorkStatus) => void;
   updateWorkItemPriority: (id: string, priority: Priority) => void;
@@ -146,6 +148,11 @@ export function WorkspaceDataProvider({
   const [businessPrioritizationFields, setBusinessPrioritizationFields] = useState<
     BusinessPrioritizationField[]
   >(snapshot.businessPrioritizationFields);
+  // Read-only aggregate from the server (see get_team_workload) - nothing in
+  // this provider ever mutates it directly, so a plain snapshot value is
+  // enough; it's refreshed on the next full page load/navigation like the
+  // rest of the snapshot.
+  const teamWorkload = snapshot.teamWorkload;
 
   const currentRole: Role = members.find((m) => m.userId === currentUserId)?.role ?? "member";
 
@@ -215,6 +222,7 @@ export function WorkspaceDataProvider({
       standups,
       activityLogs,
       businessPrioritizationFields,
+      teamWorkload,
       getProfile,
 
       updateWorkItemStatus: (id, status) => {
@@ -901,6 +909,7 @@ export function WorkspaceDataProvider({
       standups,
       activityLogs,
       businessPrioritizationFields,
+      teamWorkload,
       supabase,
     ],
   );

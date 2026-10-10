@@ -15,6 +15,7 @@ import type {
   Profile,
   RoadmapItem,
   Standup,
+  TeamWorkloadEntry,
   WorkItem,
   Workspace,
   WorkspaceMember,
@@ -74,6 +75,23 @@ export function mapMember(m: WorkspaceMemberRow): WorkspaceMember {
     workspaceId: m.workspace_id,
     userId: m.user_id,
     role: m.role,
+  };
+}
+
+/** Row shape returned by the get_team_workload RPC (see
+ * 0009_work_items_owner_scoped_select.sql) - not a table, so it isn't in the
+ * Tables map above; typed from Database["public"]["Functions"] instead. */
+type TeamWorkloadRow =
+  Database["public"]["Functions"]["get_team_workload"]["Returns"][number];
+
+export function mapTeamWorkload(r: TeamWorkloadRow): TeamWorkloadEntry {
+  return {
+    userId: r.user_id,
+    active: r.active,
+    highPriority: r.high_priority,
+    overdue: r.overdue,
+    blocked: r.blocked,
+    completedThisWeek: r.completed_this_week,
   };
 }
 

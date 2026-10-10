@@ -12,6 +12,7 @@ import {
   mapProfile,
   mapRoadmapItem,
   mapStandup,
+  mapTeamWorkload,
   mapWorkItem,
   mapWorkspace,
 } from "@/lib/data/mappers";
@@ -54,6 +55,7 @@ export async function getWorkspaceSnapshot(slug: string): Promise<WorkspaceSnaps
     standupsRes,
     activityRes,
     bizFieldsRes,
+    teamWorkloadRes,
   ] = await Promise.all([
     supabase.from("workspace_members").select("*").eq("workspace_id", workspaceId),
     supabase
@@ -81,6 +83,13 @@ export async function getWorkspaceSnapshot(slug: string): Promise<WorkspaceSnaps
       .select("*")
       .eq("workspace_id", workspaceId)
       .order("sort_order", { ascending: true }),
+    // Per-member workload counts computed server-side (see
+    // get_team_workload in 0009_work_items_owner_scoped_select.sql) - this
+    // bypasses the member-scoped work_items RLS on purpose (it's
+    // SECURITY DEFINER) so the Team page's cross-member counts stay
+    // accurate, without ever handing a colleague's item titles/content to
+    // the browser just to compute them.
+    supabase.rpc("get_team_workload", { p_workspace_id: workspaceId }),
   ]);
 
   // RLS returns an empty set here for anyone who isn't a member (see
@@ -106,6 +115,7 @@ export async function getWorkspaceSnapshot(slug: string): Promise<WorkspaceSnaps
   const standups = (standupsRes.data ?? []).map(mapStandup);
   const activityLogs = (activityRes.data ?? []).map(mapActivityLog);
   const businessPrioritizationFields = (bizFieldsRes.data ?? []).map(mapBusinessPrioritizationField);
+  const teamWorkload = (teamWorkloadRes.data ?? []).map(mapTeamWorkload);
 
   return {
     workspace,
@@ -119,6 +129,7 @@ export async function getWorkspaceSnapshot(slug: string): Promise<WorkspaceSnaps
     standups,
     activityLogs,
     businessPrioritizationFields,
+    teamWorkload,
     currentUserId: user.id,
   };
 }

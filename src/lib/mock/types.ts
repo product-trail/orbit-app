@@ -213,6 +213,19 @@ export type ActivityLog = {
   createdAt: string;
 };
 
+/** Per-member workload counts for the Team page, computed server-side (see
+ * get_team_workload in 0009_work_items_owner_scoped_select.sql) so a
+ * member's browser never receives a colleague's item titles/content just to
+ * render these numbers. */
+export type TeamWorkloadEntry = {
+  userId: string;
+  active: number;
+  highPriority: number;
+  overdue: number;
+  blocked: number;
+  completedThisWeek: number;
+};
+
 export type WorkspaceSeed = {
   workspace: Workspace;
   members: WorkspaceMember[];
@@ -225,4 +238,5 @@ export type WorkspaceSeed = {
   standups: Standup[];
   activityLogs: ActivityLog[];
   businessPrioritizationFields: BusinessPrioritizationField[];
+  teamWorkload: TeamWorkloadEntry[];
 };

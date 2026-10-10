@@ -20,9 +20,24 @@ import { cn, shortJiraId } from "@/lib/utils";
 const ALL = "all";
 
 export default function BacklogPage() {
-  const { workItems, members, getProfile, initiatives, updateWorkItemStatus } = useWorkspaceData();
+  const { workItems, members, getProfile, initiatives, updateWorkItemStatus, currentRole, currentUserId } =
+    useWorkspaceData();
   const searchParams = useSearchParams();
-  const [selectedId, setSelectedId] = useState<string | null>(searchParams.get("item"));
+  const isOwner = currentRole === "owner";
+
+  // Product Backlog is scoped to "my work" for members - only workspace
+  // owners see everyone's items here. (Business Prioritization is the
+  // intentional exception: every member sees every item there, since that
+  // view is about cross-team prioritization, not individual task lists.)
+  const visibleItems = useMemo(
+    () => (isOwner ? workItems : workItems.filter((item) => item.ownerId === currentUserId)),
+    [workItems, isOwner, currentUserId],
+  );
+
+  const [selectedId, setSelectedId] = useState<string | null>(() => {
+    const fromUrl = searchParams.get("item");
+    return fromUrl && visibleItems.some((item) => item.id === fromUrl) ? fromUrl : null;
+  });
   const [view, setView] = useState<"table" | "kanban">("table");
   const [search, setSearch] = useState("");
   const [ownerFilter, setOwnerFilter] = useState(ALL);
@@ -31,12 +46,12 @@ export default function BacklogPage() {
   const [monthFilter, setMonthFilter] = useState(ALL);
 
   const monthOptions = useMemo(() => {
-    const keys = new Set(workItems.map(reportMonthKey));
+    const keys = new Set(visibleItems.map(reportMonthKey));
     return [...keys].sort((a, b) => b.localeCompare(a));
-  }, [workItems]);
+  }, [visibleItems]);
 
   const filtered = useMemo(() => {
-    return workItems
+    return visibleItems
       .filter((item) => {
         if (search && !`${item.title} ${item.jiraId ?? ""}`.toLowerCase().includes(search.toLowerCase()))
           return false;
@@ -47,9 +62,9 @@ export default function BacklogPage() {
         return true;
       })
       .sort(byPriority);
-  }, [workItems, search, ownerFilter, statusFilter, priorityFilter, monthFilter]);
+  }, [visibleItems, search, ownerFilter, statusFilter, priorityFilter, monthFilter]);
 
-  const hasAnyItems = workItems.length > 0;
+  const hasAnyItems = visibleItems.length > 0;
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-8">
@@ -57,7 +72,9 @@ export default function BacklogPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">Product Backlog</h1>
           <p className="text-sm text-muted-foreground">
-            Everything the team is working on - with or without a JIRA ticket.
+            {isOwner
+              ? "Everything the team is working on - with or without a JIRA ticket."
+              : "Your work - with or without a JIRA ticket."}
           </p>
         </div>
         <NewWorkItemDialog />
@@ -83,19 +100,21 @@ export default function BacklogPage() {
               />
             </div>
 
-            <Select value={ownerFilter} onValueChange={(v) => setOwnerFilter(v ?? ALL)}>
-              <SelectTrigger size="sm">
-                <SelectValue placeholder="Owner">
-                  {(v: string) => (v === ALL ? "All owners" : getProfile(v).name)}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL}>All owners</SelectItem>
-                {members.map((m) => (
-                  <SelectItem key={m.userId} value={m.userId}>{getProfile(m.userId).name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {isOwner && (
+              <Select value={ownerFilter} onValueChange={(v) => setOwnerFilter(v ?? ALL)}>
+                <SelectTrigger size="sm">
+                  <SelectValue placeholder="Owner">
+                    {(v: string) => (v === ALL ? "All owners" : getProfile(v).name)}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>All owners</SelectItem>
+                  {members.map((m) => (
+                    <SelectItem key={m.userId} value={m.userId}>{getProfile(m.userId).name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
 
             <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v ?? ALL)}>
               <SelectTrigger size="sm">
