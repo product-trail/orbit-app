@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Bell } from "lucide-react";
 import { toast } from "sonner";
-import { OrbitSymbol } from "@/components/brand/orbit-logo";
+import { OrbitLogo, OrbitSymbol } from "@/components/brand/orbit-logo";
 import { WorkspaceSwitcher } from "@/components/workspace/workspace-switcher";
 import { useWorkspaceData } from "@/components/workspace/workspace-data-provider";
 import { NAV_ITEMS, SETTINGS_ITEM } from "@/components/workspace/nav-config";
@@ -106,11 +106,8 @@ export function AppShell({
   return (
     <div className="flex h-screen overflow-hidden">
       <aside className="hidden w-60 shrink-0 flex-col gap-4 overflow-y-auto border-r border-sidebar-border bg-sidebar px-3 py-4 md:flex">
-        <div className="flex items-center gap-2 px-1.5">
-          <OrbitSymbol size={30} />
-          <span className="text-lg font-semibold tracking-tight text-sidebar-foreground">
-            Orbits
-          </span>
+        <div className="flex items-center px-1.5">
+          <OrbitLogo width={180} />
         </div>
 
         <WorkspaceSwitcher currentSlug={slug} workspaces={workspaces} />
