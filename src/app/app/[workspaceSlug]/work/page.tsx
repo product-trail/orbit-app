@@ -194,7 +194,6 @@ export default function BacklogPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Work</TableHead>
-                      <TableHead>Initiative</TableHead>
                       <TableHead>Type</TableHead>
                       <TableHead>Impact</TableHead>
                       <TableHead>Priority</TableHead>
@@ -223,11 +222,6 @@ export default function BacklogPage() {
                               </span>
                             )}
                           </div>
-                        </TableCell>
-                        <TableCell className="max-w-40 truncate text-muted-foreground">
-                          {item.initiativeId
-                            ? (initiatives.find((i) => i.id === item.initiativeId)?.name ?? "-")
-                            : "-"}
                         </TableCell>
                         <TableCell className="text-muted-foreground">{item.type}</TableCell>
                         <TableCell className="text-muted-foreground">{item.impact}</TableCell>
