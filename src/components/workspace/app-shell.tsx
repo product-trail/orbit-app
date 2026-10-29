@@ -5,7 +5,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { Bell } from "lucide-react";
 import { toast } from "sonner";
 import { OrbitSymbol } from "@/components/brand/orbit-logo";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { WorkspaceSwitcher } from "@/components/workspace/workspace-switcher";
 import { useWorkspaceData } from "@/components/workspace/workspace-data-provider";
 import { NAV_ITEMS, SETTINGS_ITEM } from "@/components/workspace/nav-config";
@@ -153,7 +152,6 @@ export function AppShell({
             >
               <Bell className="size-4" />
             </Button>
-            <ThemeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={

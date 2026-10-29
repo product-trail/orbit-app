@@ -25,7 +25,7 @@ export default function BacklogPage() {
   const searchParams = useSearchParams();
   const isOwner = currentRole === "owner";
 
-  // Product Backlog is scoped to "my work" for members - only workspace
+  // Task Backlogs is scoped to "my work" for members - only workspace
   // owners see everyone's items here. (Business Prioritization is the
   // intentional exception: every member sees every item there, since that
   // view is about cross-team prioritization, not individual task lists.)
@@ -70,7 +70,7 @@ export default function BacklogPage() {
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-8">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Product Backlog</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Task Backlogs</h1>
           <p className="text-sm text-muted-foreground">
             {isOwner
               ? "Everything the team is working on - with or without a JIRA ticket."

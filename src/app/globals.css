@@ -2,15 +2,25 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/*
+ * Pinned to class-based `dark:` scoping (rather than Tailwind's default
+ * `prefers-color-scheme` media query) and deliberately never toggled
+ * anywhere in the app. Without this override, shadcn's vendored `dark:`
+ * utility classes (src/components/ui/*) would fall back to the OS's dark
+ * mode preference and partially re-introduce dark styling outside our
+ * control - keeping this line is what makes dark mode fully removed
+ * rather than "removed except when your OS is in dark mode".
+ */
 @custom-variant dark (&:is(.dark *));
 
 /*
  * Orbit Design System
  * -----------------------------------------------------------------------
- * Dark navy foundation with purple/indigo brand accent. Semantic colors
- * (blue/green/yellow/coral) are reserved for status + priority indicators.
- * See design tokens reference: docs/design-system.md is intentionally not
- * created — this file + tailwind utility classes ARE the source of truth.
+ * Light-only (dark mode intentionally removed). Slate/white foundation
+ * with purple/indigo brand accent. Semantic colors (blue/green/yellow/
+ * coral) are reserved for status + priority indicators. See design tokens
+ * reference: docs/design-system.md is intentionally not created — this
+ * file + tailwind utility classes ARE the source of truth.
  */
 
 @theme inline {
@@ -136,68 +146,6 @@
   --sidebar-accent: #f1f5f9;
   --sidebar-accent-foreground: #0b1220;
   --sidebar-border: #e2e8f0;
-  --sidebar-ring: #6366f1;
-}
-
-/* ---------------------------------------------------------------------- */
-/* Dark mode                                                              */
-/* ---------------------------------------------------------------------- */
-.dark {
-  --background: #0b1220; /* deep navy */
-  --foreground: #ffffff;
-
-  --card: #111827; /* layered surface */
-  --card-foreground: #ffffff;
-
-  --popover: #111827;
-  --popover-foreground: #ffffff;
-
-  --primary: #6366f1;
-  --primary-foreground: #ffffff;
-
-  --secondary: #1f2937;
-  --secondary-foreground: #ffffff;
-
-  --muted: #1f2937;
-  --muted-foreground: #94a3b8;
-
-  --accent: #1e1b4b; /* deep indigo tint */
-  --accent-foreground: #c7d2fe;
-
-  --destructive: #f87171;
-  --destructive-foreground: #0b1220;
-
-  --border: #1f2937;
-  --input: #1f2937;
-  --ring: #6366f1;
-
-  --brand-indigo: #6366f1;
-  --brand-purple: #8b5cf6;
-
-  --info: #3b82f6;
-  --info-foreground: #ffffff;
-  --success: #10b981;
-  --success-foreground: #04150f;
-  --warning: #fbbf24;
-  --warning-foreground: #1c1502;
-  --danger: #f87171;
-  --danger-foreground: #1c0a08;
-  --teal: #2dd4bf;
-  --teal-foreground: #042f2c;
-
-  --chart-1: #6366f1;
-  --chart-2: #8b5cf6;
-  --chart-3: #3b82f6;
-  --chart-4: #10b981;
-  --chart-5: #fbbf24;
-
-  --sidebar: #0b1220;
-  --sidebar-foreground: #ffffff;
-  --sidebar-primary: #6366f1;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #111827;
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #1f2937;
   --sidebar-ring: #6366f1;
 }
 

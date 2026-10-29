@@ -167,7 +167,7 @@ export default function BusinessPrioritizationPage() {
         <EmptyState
           icon={ArrowUpDown}
           title="Nothing here yet"
-          description='Work items become eligible once their status is "PRD Complete". Add one from its detail panel in Product Backlog.'
+          description='Work items become eligible once their status is "PRD Complete". Add one from its detail panel in Task Backlogs.'
         />
       ) : (
         <>

@@ -23,8 +23,8 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Home", href: (slug) => `/app/${slug}`, icon: House },
   { label: "My Work", href: (slug) => `/app/${slug}/my-work`, icon: ListChecks },
   {
-    label: "Product Backlog",
-    mobileLabel: "Backlog",
+    label: "Task Backlogs",
+    mobileLabel: "Backlogs",
     href: (slug) => `/app/${slug}/work`,
     icon: List,
   },
