@@ -26,7 +26,9 @@ export type WorkspaceSnapshot = WorkspaceSeed & { currentUserId: string };
  * Loads everything a workspace's app shell needs in one pass, straight from
  * Postgres (RLS-gated). Returns null if there's no signed-in user, the slug
  * doesn't resolve to a workspace, or the signed-in user isn't a member of it
- * — callers should treat all three the same way (redirect/404).
+ * — the caller (WorkspaceLayout) checks auth separately beforehand, so in
+ * practice a null here means "this slug isn't theirs"; it redirects to /app
+ * to resolve a workspace that is, rather than 404ing.
  */
 export async function getWorkspaceSnapshot(slug: string): Promise<WorkspaceSnapshot | null> {
   const supabase = await createClient();

@@ -73,7 +73,7 @@ export default function BacklogPage() {
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">Task Backlogs</h1>
           <p className="text-sm text-muted-foreground">
             {isOwner
-              ? "Everything the team is working on - with or without a JIRA ticket."
+              ? "Everything the team is working on with or without a JIRA ticket."
               : "Your work - with or without a JIRA ticket."}
           </p>
         </div>
