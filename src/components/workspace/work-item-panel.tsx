@@ -474,7 +474,7 @@ export function WorkItemPanel({
                 ) : addingJira ? (
                   <div className="flex gap-2">
                     <Input
-                      placeholder="PP-1234"
+                      placeholder="ENG-1234"
                       value={jiraIdDraft}
                       onChange={(e) => setJiraIdDraft(e.target.value)}
                       className="h-8 w-32"

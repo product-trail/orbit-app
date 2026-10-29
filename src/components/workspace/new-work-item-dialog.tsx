@@ -143,7 +143,7 @@ export function NewWorkItemDialog({
               id="wi-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Analyse Postpaid funnel drop"
+              placeholder="Analyze signup funnel drop-off"
               autoFocus
             />
           </div>
@@ -238,7 +238,7 @@ export function NewWorkItemDialog({
                 id="wi-jira"
                 value={jiraId}
                 onChange={(e) => setJiraId(e.target.value)}
-                placeholder="PP-1234"
+                placeholder="ENG-1234"
               />
             </div>
 

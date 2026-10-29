@@ -90,7 +90,7 @@ export default function CreateWorkspacePage() {
               id="workspace-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Postpaid Product Team"
+              placeholder="Acme Product Team"
               autoFocus
             />
           </div>
