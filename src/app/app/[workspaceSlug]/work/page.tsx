@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { List, Columns3, Search, ListTodo } from "lucide-react";
+import { List, Columns3, Search, ListTodo, ChevronDown } from "lucide-react";
 import { useWorkspaceData } from "@/components/workspace/workspace-data-provider";
 import { StatusBadge, PriorityBadge, BlockedBadge, WORK_STATUSES, PRIORITIES, byPriority } from "@/components/workspace/badges";
 import { WorkItemPanel } from "@/components/workspace/work-item-panel";
@@ -11,13 +11,86 @@ import { EmptyState } from "@/components/workspace/empty-state";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDueDate, formatMonthLabel, reportMonthKey } from "@/lib/mock/date-helpers";
-import type { WorkStatus } from "@/lib/mock/types";
+import type { Priority, WorkStatus } from "@/lib/mock/types";
 import { cn, shortJiraId } from "@/lib/utils";
 
-const ALL = "all";
+/**
+ * Multi-select filter dropdown: an "All <label>" trigger that opens a
+ * checklist (any number of options can be active at once, rather than the
+ * single-value Select used for per-item status editing elsewhere on this
+ * page). An empty `selected` set means "no filter applied" / "all" -
+ * matching the semantics the single-select filters used before this was
+ * introduced, so filtering logic elsewhere didn't need to special-case it.
+ */
+function MultiSelectFilter<T extends string>({
+  label,
+  options,
+  selected,
+  onChange,
+}: {
+  label: string;
+  options: { value: T; label: string }[];
+  selected: Set<T>;
+  onChange: (next: Set<T>) => void;
+}) {
+  const toggle = (value: T) => {
+    const next = new Set(selected);
+    if (next.has(value)) next.delete(value);
+    else next.add(value);
+    onChange(next);
+  };
+
+  const triggerText =
+    selected.size === 0
+      ? `All ${label}`
+      : selected.size === 1
+        ? (options.find((o) => selected.has(o.value))?.label ?? label)
+        : `${selected.size} ${label}`;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <button
+            type="button"
+            className="flex h-7 items-center gap-1.5 rounded-[10px] border border-input bg-transparent py-1 pr-2 pl-2.5 text-[0.8rem] whitespace-nowrap text-foreground transition-colors outline-none select-none hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-expanded:bg-muted"
+          >
+            {triggerText}
+            <ChevronDown className="size-3.5 text-muted-foreground" />
+          </button>
+        }
+      />
+      <DropdownMenuContent align="start" className="min-w-44">
+        {options.map((opt) => (
+          <DropdownMenuCheckboxItem
+            key={opt.value}
+            checked={selected.has(opt.value)}
+            onCheckedChange={() => toggle(opt.value)}
+          >
+            {opt.label}
+          </DropdownMenuCheckboxItem>
+        ))}
+        {selected.size > 0 && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => onChange(new Set())}>Clear filter</DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 export default function BacklogPage() {
   const { workItems, members, getProfile, initiatives, updateWorkItemStatus, currentRole, currentUserId } =
@@ -40,10 +113,10 @@ export default function BacklogPage() {
   });
   const [view, setView] = useState<"table" | "kanban">("table");
   const [search, setSearch] = useState("");
-  const [ownerFilter, setOwnerFilter] = useState(ALL);
-  const [statusFilter, setStatusFilter] = useState(ALL);
-  const [priorityFilter, setPriorityFilter] = useState(ALL);
-  const [monthFilter, setMonthFilter] = useState(ALL);
+  const [ownerFilter, setOwnerFilter] = useState<Set<string>>(new Set());
+  const [statusFilter, setStatusFilter] = useState<Set<WorkStatus>>(new Set());
+  const [priorityFilter, setPriorityFilter] = useState<Set<Priority>>(new Set());
+  const [monthFilter, setMonthFilter] = useState<Set<string>>(new Set());
 
   const monthOptions = useMemo(() => {
     const keys = new Set(visibleItems.map(reportMonthKey));
@@ -55,10 +128,10 @@ export default function BacklogPage() {
       .filter((item) => {
         if (search && !`${item.title} ${item.jiraId ?? ""}`.toLowerCase().includes(search.toLowerCase()))
           return false;
-        if (ownerFilter !== ALL && item.ownerId !== ownerFilter) return false;
-        if (statusFilter !== ALL && item.status !== statusFilter) return false;
-        if (priorityFilter !== ALL && item.priority !== priorityFilter) return false;
-        if (monthFilter !== ALL && reportMonthKey(item) !== monthFilter) return false;
+        if (ownerFilter.size > 0 && !ownerFilter.has(item.ownerId)) return false;
+        if (statusFilter.size > 0 && !statusFilter.has(item.status)) return false;
+        if (priorityFilter.size > 0 && !priorityFilter.has(item.priority)) return false;
+        if (monthFilter.size > 0 && !monthFilter.has(reportMonthKey(item))) return false;
         return true;
       })
       .sort(byPriority);
@@ -101,62 +174,34 @@ export default function BacklogPage() {
             </div>
 
             {isOwner && (
-              <Select value={ownerFilter} onValueChange={(v) => setOwnerFilter(v ?? ALL)}>
-                <SelectTrigger size="sm">
-                  <SelectValue placeholder="Owner">
-                    {(v: string) => (v === ALL ? "All owners" : getProfile(v).name)}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={ALL}>All owners</SelectItem>
-                  {members.map((m) => (
-                    <SelectItem key={m.userId} value={m.userId}>{getProfile(m.userId).name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <MultiSelectFilter
+                label="owners"
+                options={members.map((m) => ({ value: m.userId, label: getProfile(m.userId).name }))}
+                selected={ownerFilter}
+                onChange={setOwnerFilter}
+              />
             )}
 
-            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v ?? ALL)}>
-              <SelectTrigger size="sm">
-                <SelectValue placeholder="Status">
-                  {(v: string) => (v === ALL ? "All statuses" : v)}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL}>All statuses</SelectItem>
-                {WORK_STATUSES.map((s) => (
-                  <SelectItem key={s} value={s}>{s}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <MultiSelectFilter
+              label="statuses"
+              options={WORK_STATUSES.map((s) => ({ value: s, label: s }))}
+              selected={statusFilter}
+              onChange={setStatusFilter}
+            />
 
-            <Select value={priorityFilter} onValueChange={(v) => setPriorityFilter(v ?? ALL)}>
-              <SelectTrigger size="sm">
-                <SelectValue placeholder="Priority">
-                  {(v: string) => (v === ALL ? "All priorities" : v)}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL}>All priorities</SelectItem>
-                {PRIORITIES.map((p) => (
-                  <SelectItem key={p} value={p}>{p}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <MultiSelectFilter
+              label="priorities"
+              options={PRIORITIES.map((p) => ({ value: p, label: p }))}
+              selected={priorityFilter}
+              onChange={setPriorityFilter}
+            />
 
-            <Select value={monthFilter} onValueChange={(v) => setMonthFilter(v ?? ALL)}>
-              <SelectTrigger size="sm">
-                <SelectValue placeholder="Month">
-                  {(v: string) => (v === ALL ? "All time" : formatMonthLabel(v))}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL}>All time</SelectItem>
-                {monthOptions.map((m) => (
-                  <SelectItem key={m} value={m}>{formatMonthLabel(m)}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <MultiSelectFilter
+              label="time"
+              options={monthOptions.map((m) => ({ value: m, label: formatMonthLabel(m) }))}
+              selected={monthFilter}
+              onChange={setMonthFilter}
+            />
 
             <div className="ml-auto flex items-center gap-1 rounded-md border border-border p-0.5">
               <Button
